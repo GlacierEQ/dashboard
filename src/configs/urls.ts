@@ -1,29 +1,38 @@
-export const AUTH_URLS = {
-  FORGOT_PASSWORD: '/forgot-password',
-  SIGN_IN: '/sign-in',
-  SIGN_UP: '/sign-up',
-  CALLBACK: '/api/auth/callback',
-  CLI: '/auth/cli',
+export const PROTECTED_URLS = {
+  SANDBOXES: '/sandboxes',
+
+  SANDBOX: (sandboxId: string) => `/sandboxes/${sandboxId}/monitoring`,
+  SANDBOX_MONITORING: (sandboxId: string) =>
+    `/sandboxes/${sandboxId}/monitoring`,
+  SANDBOX_LOGS: (sandboxId: string) => `/sandboxes/${sandboxId}/logs`,
+  SANDBOX_TERMINAL: (sandboxId: string) => `/sandboxes/${sandboxId}/terminal`,
+  SANDBOX_FILESYSTEM: (sandboxId: string) =>
+    `/sandboxes/${sandboxId}/filesystem`,
+
+  TEMPLATES: '/templates/list',
+  TEMPLATES_LIST: '/templates/list',
+  TEMPLATES_BUILDS: '/templates/builds',
+  TEMPLATE_OVERVIEW: (templateId: string) =>
+    `/templates/${templateId}/overview`,
+  TEMPLATE_DETAIL_BUILDS: (templateId: string) =>
+    `/templates/${templateId}/builds`,
+  TEMPLATE_TAGS: (templateId: string) => `/templates/${templateId}/tags`,
+  TEMPLATE_TAG_HISTORY: (templateId: string, tag: string) =>
+    `/templates/${templateId}/tags/${encodeURIComponent(tag)}`,
+  TEMPLATE_BUILD: (templateId: string, buildId: string) =>
+    `/templates/${templateId}/builds/${buildId}`,
 }
 
-export const PROTECTED_URLS = {
-  DASHBOARD: '/dashboard',
-  ACCOUNT_SETTINGS: '/dashboard/account',
-  NEW_TEAM: '/dashboard/teams/new',
-  TEAMS: '/dashboard/teams',
-  TEAM: (teamIdOrSlug: string) => `/dashboard/${teamIdOrSlug}/team`,
-  SANDBOXES: (teamIdOrSlug: string) => `/dashboard/${teamIdOrSlug}/sandboxes`,
-  SANDBOX: (teamIdOrSlug: string, sandboxId: string) =>
-    `/dashboard/${teamIdOrSlug}/sandboxes/${sandboxId}`,
-  SANDBOX_INSPECT: (teamIdOrSlug: string, sandboxId: string) =>
-    `/dashboard/${teamIdOrSlug}/sandboxes/${sandboxId}/inspect`,
-  TEMPLATES: (teamIdOrSlug: string) => `/dashboard/${teamIdOrSlug}/templates`,
-  USAGE: (teamIdOrSlug: string) => `/dashboard/${teamIdOrSlug}/usage`,
-  BILLING: (teamIdOrSlug: string) => `/dashboard/${teamIdOrSlug}/billing`,
-  BUDGET: (teamIdOrSlug: string) => `/dashboard/${teamIdOrSlug}/budget`,
-  KEYS: (teamIdOrSlug: string) => `/dashboard/${teamIdOrSlug}/keys`,
-  RESET_PASSWORD: '/dashboard/account',
-}
+/**
+ * Route prefixes gated by the api-key proxy. Anything outside these (and `/`)
+ * is public.
+ */
+export const PROTECTED_ROUTE_PREFIXES: readonly string[] = [
+  '/sandboxes',
+  '/templates',
+]
+
+export const SIGN_OUT_URL = '/api/sign-out'
 
 export const HELP_URLS = {
   BUILD_TEMPLATE:
@@ -33,7 +42,7 @@ export const HELP_URLS = {
 
 export const BASE_URL = process.env.VERCEL_ENV
   ? process.env.VERCEL_ENV === 'production'
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    ? 'https://e2b.dev'
     : `https://${process.env.VERCEL_BRANCH_URL}`
   : 'http://localhost:3000'
 

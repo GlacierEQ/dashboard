@@ -1,15 +1,16 @@
 'use client'
 
-import { l } from '@/lib/clients/logger'
-import { useSandboxInspectAnalytics } from '@/lib/hooks/use-analytics'
-import { cn } from '@/lib/utils'
-import { Loader } from '@/ui/loader'
-import { Button } from '@/ui/primitives/button'
-import { Input } from '@/ui/primitives/input'
-import { ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
-import { serializeError } from 'serialize-error'
+import { COOKIE_KEYS } from '@/configs/cookies'
+import { l, serializeErrorForLog } from '@/core/shared/clients/logger/logger'
+import { useSandboxInspectAnalytics } from '@/lib/hooks/use-analytics'
+import { cn } from '@/lib/utils'
+import { setBrowserCookie } from '@/lib/utils/browser-cookies'
+import { Button } from '@/ui/primitives/button'
+import { ArrowRightIcon } from '@/ui/primitives/icons'
+import { Input } from '@/ui/primitives/input'
+import { Loader } from '@/ui/primitives/loader'
 
 interface RootPathInputProps {
   className?: string
@@ -27,17 +28,13 @@ export default function RootPathInput({
 
   const save = async (newPath: string) => {
     try {
-      await fetch('/api/sandbox/inspect/root-path', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: newPath }),
-      })
+      setBrowserCookie(COOKIE_KEYS.SANDBOX_INSPECT_ROOT_PATH, newPath)
     } catch (error) {
       l.error({
         key: 'sandbox_inspect_root_path_input:save_root_path_failed',
         message:
           error instanceof Error ? error.message : 'Failed to save root path',
-        error: serializeError(error),
+        error: serializeErrorForLog(error),
       })
     }
   }
@@ -63,23 +60,27 @@ export default function RootPathInput({
         e.preventDefault()
         handleSubmit(value)
       }}
-      className={cn('relative flex h-full items-center gap-2', className)}
+      className={cn('relative h-full', className)}
     >
+      <span className="text-fg-tertiary absolute left-2 top-1/2 -translate-y-1/2">
+        {'$'}
+      </span>
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         disabled={isPending}
-        className="border-none pl-0 focus:!border-none"
         placeholder="/home/user"
+        className="pl-6 pr-18 border-none h-full"
       />
 
       <Button
-        className="z-20 mr-1.5 h-7 rounded-none"
-        size="sm"
+        className="z-20 mr-1.5 absolute right-0 top-1/2 -translate-y-1/2 active:-translate-y-1/2"
+        variant="tertiary"
         disabled={isPending || !isDirty}
         type="submit"
       >
-        Go {isPending ? <Loader /> : <ArrowRight className="size-4" />}
+        Go{' '}
+        {isPending ? <Loader variant="square" size="lg" /> : <ArrowRightIcon />}
       </Button>
     </form>
   )

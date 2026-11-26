@@ -1,4 +1,5 @@
-import { InfoIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { InfoIcon } from './primitives/icons'
 import {
   Tooltip,
   TooltipContent,
@@ -9,17 +10,32 @@ import {
 interface HelpTooltipProps {
   children: React.ReactNode
   trigger?: React.ReactNode
+  classNames?: {
+    content?: string
+    icon?: string
+  }
 }
 
-export default function HelpTooltip({ children, trigger }: HelpTooltipProps) {
+export default function HelpTooltip({
+  children,
+  trigger,
+  classNames,
+}: HelpTooltipProps) {
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
-        <TooltipTrigger tabIndex={-1} type="button">
-          {trigger || <InfoIcon className="text-fg-500 size-4" />}
+        <TooltipTrigger tabIndex={-1} type="button" asChild={!!trigger}>
+          {trigger || <InfoIcon className="text-fg-tertiary size-4" />}
         </TooltipTrigger>
-        <TooltipContent className="text-fg-300 max-w-[200px] p-2 font-sans text-xs font-normal normal-case">
-          <InfoIcon className="text-fg-500 mb-2 size-4" />
+        <TooltipContent
+          className={cn(
+            'text-fg-secondary max-w-[200px] p-2 font-sans text-xs  normal-case',
+            classNames?.content
+          )}
+        >
+          <InfoIcon
+            className={cn('text-fg-tertiary mb-2 size-4', classNames?.icon)}
+          />
           {children}
         </TooltipContent>
       </Tooltip>

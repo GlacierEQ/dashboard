@@ -1,0 +1,57 @@
+# Changelog
+
+## [0.5.2](https://github.com/e2b-dev/dashboard/compare/v0.5.1...v0.5.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** bump next to 16.4.5 ([#550](https://github.com/e2b-dev/dashboard/issues/550)) ([2f968f0](https://github.com/e2b-dev/dashboard/commit/2f968f0c24888f7776a65811046d3cd7112068b3))
+
+## [0.5.1](https://github.com/e2b-dev/dashboard/compare/v0.5.0...v0.5.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* answer ok when infra-api's /health is text/plain ([#547](https://github.com/e2b-dev/dashboard/issues/547)) ([3758435](https://github.com/e2b-dev/dashboard/commit/3758435cca05b185c75c8f10ab58cb533266a3e1))
+
+## [0.5.0](https://github.com/e2b-dev/dashboard/compare/v0.4.0...v0.5.0) (2026-11-05)
+
+
+### Features
+
+* remove the dashboard-api dependency ([#545](https://github.com/e2b-dev/dashboard/issues/545)) ([a327227](https://github.com/e2b-dev/dashboard/commit/a3272272a007cfc35d92b915be2912eb520932c0))
+
+## [0.4.0](https://github.com/e2b-dev/dashboard/compare/v0.3.0...v0.4.0) (2026-10-27)
+
+
+### Features
+
+* **templates:** read templates from api instead of dashboard-api ([#539](https://github.com/e2b-dev/dashboard/issues/539)) ([7dae3af](https://github.com/e2b-dev/dashboard/commit/7dae3afb68771c7e7fb954079015163a67beed5a))
+
+## [0.3.0](https://github.com/e2b-dev/dashboard/compare/v0.2.2...v0.3.0) (2026-10-27)
+
+
+### Features
+
+* **builds:** read builds from infra api routes ([#541](https://github.com/e2b-dev/dashboard/issues/541)) ([e8697e2](https://github.com/e2b-dev/dashboard/commit/e8697e2fda2365e21458b7b8f1e664ff5d3a46d6))
+
+## [0.2.2](https://github.com/e2b-dev/dashboard/compare/v0.2.1...v0.2.2) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** bump next to 16.3.6 ([#535](https://github.com/e2b-dev/dashboard/issues/535)) ([b2bae4f](https://github.com/e2b-dev/dashboard/commit/b2bae4f4afa799cb922eafdd61070a6a8a48dd12))
+
+## [0.2.1](https://github.com/e2b-dev/dashboard/compare/v0.2.0...v0.2.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* **publish:** build the image for arm64 too ([#533](https://github.com/e2b-dev/dashboard/issues/533)) ([8ca65cd](https://github.com/e2b-dev/dashboard/commit/8ca65cdc64f9be3be19e5777d5b4c79f3d030666))
+
+## [0.2.0](https://github.com/e2b-dev/dashboard/compare/v0.1.0...v0.2.0) (2026-09-16)
+
+
+### Features
+
+* **container:** self-hostable container image with runtime configuration ([#528](https://github.com/e2b-dev/dashboard/issues/528)) ([f7b85de](https://github.com/e2b-dev/dashboard/commit/f7b85dee10b98c0e2196d631759174b2249a7e85))

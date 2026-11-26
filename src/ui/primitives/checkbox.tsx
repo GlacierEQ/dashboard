@@ -1,30 +1,54 @@
 'use client'
 
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox'
-import { Check } from 'lucide-react'
-import * as React from 'react'
+import type * as React from 'react'
+import { cn } from '@/lib/utils/ui'
+import { CheckmarkIcon } from '@/ui/primitives/icons'
 
-import { cn } from '@/lib/utils'
-
-const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <CheckboxPrimitive.Root
-    ref={ref}
-    className={cn(
-      'border-primary ring-offset-background peer size-5 shrink-0 border data-[state=checked]:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-      className
-    )}
-    {...props}
-  >
-    <CheckboxPrimitive.Indicator
-      className={cn('flex items-center justify-center text-current')}
+function Checkbox({
+  className,
+  ...props
+}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+  return (
+    <CheckboxPrimitive.Root
+      data-slot="checkbox"
+      className={cn(
+        [
+          // Base layout and sizing
+          'peer size-4 shrink-0',
+          // Border and outline
+          'border outline-none text-fg-inverted',
+          // Transitions
+          'transition-colors anim-ease-appear anim-duration-fast',
+          // Cursor
+          'cursor-pointer disabled:cursor-default',
+          // Disabled state (unchecked)
+          'disabled:pointer-events-none disabled:opacity-65',
+          // Checked state
+          'data-[state=checked]:bg-accent-main-highlight data-[state=checked]:text-fg-inverted data-[state=checked]:border-accent-main-highlight',
+          // Checked + Disabled state
+          'data-[state=checked]:disabled:opacity-100 data-[state=checked]:disabled:bg-fill data-[state=checked]:disabled:border-stroke data-[state=checked]:disabled:text-icon-tertiary',
+          // Hover state
+          'hover:border-stroke-active',
+          'data-[display-state=hover]:border-stroke-active', // duplicated hover, for display purposes
+          // Focus state
+          'focus-visible:ring-1 focus-visible:ring-accent-main-highlight focus-visible:ring-offset-1 focus-visible:ring-offset-bg',
+          'data-[display-state=focus]:ring-1 data-[display-state=focus]:ring-accent-main-highlight data-[display-state=focus]:ring-offset-1 data-[display-state=focus]:ring-offset-bg', // duplicated focus, for display purposes
+          // Error state
+          'aria-invalid:ring-1 aria-invalid:ring-accent-error-highlight aria-invalid:ring-offset-1 aria-invalid:ring-offset-bg',
+        ].join(' '),
+        className
+      )}
+      {...props}
     >
-      <Check className="size-4" />
-    </CheckboxPrimitive.Indicator>
-  </CheckboxPrimitive.Root>
-))
-Checkbox.displayName = CheckboxPrimitive.Root.displayName
+      <CheckboxPrimitive.Indicator
+        data-slot="checkbox-indicator"
+        className="flex items-center justify-center transition-none"
+      >
+        <CheckmarkIcon className="size-3.5" />
+      </CheckboxPrimitive.Indicator>
+    </CheckboxPrimitive.Root>
+  )
+}
 
 export { Checkbox }

@@ -1,7 +1,6 @@
-import { FileContentState } from '@/features/dashboard/sandbox/inspect/filesystem/store'
-
 // Leverage pathe (a tiny, browser-friendly path replacement)
-import { normalize, dirname, basename, join } from 'pathe'
+import { basename, dirname, join, normalize } from 'pathe'
+import type { FileContentState } from '@/features/dashboard/sandbox/inspect/filesystem/store'
 
 /**
  * Normalize a path so that it:
@@ -86,6 +85,6 @@ export async function determineFileContentState(
     const content = new TextDecoder('utf-8', { fatal: true }).decode(data)
     return { type: 'text', text: content }
   } catch {
-    return { type: 'unreadable' }
+    return { type: 'unreadable', reason: 'file_type' }
   }
 }

@@ -2,9 +2,8 @@
 
 import * as SelectPrimitive from '@radix-ui/react-select'
 import * as React from 'react'
-
 import { cn } from '@/lib/utils'
-import { ChevronsUpDown } from 'lucide-react'
+import { UpDownIcon } from '@/ui/primitives/icons'
 import {
   menuContentStyles,
   menuGroupStyles,
@@ -42,21 +41,21 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-10 w-full items-center justify-between rounded-sm',
-      'bg-bg cursor-pointer border border-dashed px-3 py-2 text-sm',
+      'flex h-10 w-full items-center justify-between ',
+      'bg-bg cursor-pointer border border-dashed px-3 py-2 ',
       'transition-colors outline-none',
-      'focus:bg-bg-100 active:translate-y-[1px]',
+      'focus:bg-bg-1 active:translate-y-[1px]',
       'disabled:cursor-not-allowed disabled:opacity-50',
       '[&>span]:line-clamp-1',
-      'data-[placeholder]:text-fg-300',
+      'data-[placeholder]:text-fg-secondary',
       className,
       props.classNames?.trigger
     )}
     {...props}
   >
     {children}
-    <ChevronsUpDown
-      className={cn('text-fg-300 ml-2 size-3.5', props.classNames?.icon)}
+    <UpDownIcon
+      className={cn('text-fg-secondary ml-2 size-3.5', props.classNames?.icon)}
     />
   </SelectPrimitive.Trigger>
 ))
@@ -156,7 +155,7 @@ const SelectItem = React.forwardRef<
     className={cn(menuItemVariants({ variant }), 'pr-8', className)}
     {...props}
   >
-    <span className="text-accent absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className="text-accent-main-highlight absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>{'<<'}</SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

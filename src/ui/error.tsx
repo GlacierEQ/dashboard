@@ -1,36 +1,36 @@
 'use client'
 
-import { l } from '@/lib/clients/logger'
-import { cn } from '@/lib/utils'
-import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary'
+import { l, serializeErrorForLog } from '@/core/shared/clients/logger/logger'
+import { cn } from '@/lib/utils'
 import { ErrorIndicator } from './error-indicator'
 import Frame from './frame'
-import { serializeError } from 'serialize-error'
+
+const GENERIC_ERROR_MESSAGE =
+  "We're aware of the issue and are working to fix it as soon as possible."
 
 export default function ErrorBoundary({
   error,
   description,
   className,
   hideFrame = false,
+  onRetry,
 }: {
   error: Error & { digest?: string }
   description?: string
   className?: string
   hideFrame?: boolean
+  onRetry?: () => void
 }) {
   useEffect(() => {
-    if (Sentry.isInitialized()) {
-      Sentry.captureException(error, {
-        level: 'fatal',
-        tags: {
-          component: 'ErrorBoundary',
-        },
-      })
-    } else {
-      l.error({ key: 'error_boundary', message: error.message, sanitizedError: serializeError(error) })
-    }
+    l.error(
+      {
+        key: 'error_boundary',
+        error: serializeErrorForLog(error),
+      },
+      `${error.message}`
+    )
   }, [error])
 
   return (
@@ -43,8 +43,9 @@ export default function ErrorBoundary({
       {hideFrame ? (
         <ErrorIndicator
           description={description}
-          message={error.message}
+          message={GENERIC_ERROR_MESSAGE}
           className="border-none"
+          onRetry={onRetry}
         />
       ) : (
         <Frame>
@@ -52,6 +53,7 @@ export default function ErrorBoundary({
             description={description}
             message={error.message}
             className="border-none"
+            onRetry={onRetry}
           />
         </Frame>
       )}

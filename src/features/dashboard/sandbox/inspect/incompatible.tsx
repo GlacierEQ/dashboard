@@ -1,5 +1,8 @@
 'use client'
 
+import { motion } from 'motion/react'
+import Link from 'next/link'
+import { useEffect } from 'react'
 import { HELP_URLS, PROTECTED_URLS } from '@/configs/urls'
 import { useSandboxInspectAnalytics } from '@/lib/hooks/use-analytics'
 import { CodeBlock } from '@/ui/code-block'
@@ -14,37 +17,35 @@ import {
   CardHeader,
   CardTitle,
 } from '@/ui/primitives/card'
-import { AlertTriangle, ArrowUpRight, ChevronLeft } from 'lucide-react'
-import { motion } from 'motion/react'
-import Link from 'next/link'
-import { useEffect } from 'react'
+import {
+  ChevronLeftIcon,
+  ExternalLinkIcon,
+  WarningIcon,
+} from '@/ui/primitives/icons'
 
 interface SandboxInspectIncompatibleProps {
   templateNameOrId?: string
-  teamIdOrSlug: string
 }
 
 export default function SandboxInspectIncompatible({
   templateNameOrId,
-  teamIdOrSlug,
 }: SandboxInspectIncompatibleProps) {
   const codeClassNames = 'mx-0.5 h-5.5 rounded-none align-middle'
   const { trackInteraction } = useSandboxInspectAnalytics()
 
   useEffect(() => {
-    if (!templateNameOrId || !teamIdOrSlug) return
+    if (!templateNameOrId) return
 
     trackInteraction('viewed_incompatible', {
-      team_id: teamIdOrSlug,
       template_name_or_id: templateNameOrId,
     })
-  }, [trackInteraction, teamIdOrSlug])
+  }, [trackInteraction])
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center p-4 md:justify-center">
-      <div className="text-border-300 pointer-events-none absolute -top-30 -right-100 -z-10 flex overflow-hidden">
-        <AsciiBackgroundPattern className="w-1/2" />
-        <AsciiBackgroundPattern className="mi w-1/2 -scale-x-100" />
+      <div className="text-fill-highlight pointer-events-none absolute top-0 -left-250 flex justify-start overflow-hidden">
+        <AsciiBackgroundPattern className="w-auto text-right!" />
+        <AsciiBackgroundPattern className="w-auto text-right! -scale-x-100" />
       </div>
       <motion.div
         initial={{ opacity: 0 }}
@@ -55,42 +56,36 @@ export default function SandboxInspectIncompatible({
         <Card className="bg-bg flex h-full min-h-160 w-full max-w-150 flex-col justify-between border p-7">
           <CardHeader className="px-0 pt-0 pb-7">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="text-warning h-5 w-5" />
-              <CardTitle className="text-lg">Incompatible template</CardTitle>
+              <WarningIcon className="text-accent-warning-highlight h-5 w-5" />
+              <CardTitle>Incompatible template</CardTitle>
             </div>
-            <CardDescription className="text-fg-300 leading-5">
+            <CardDescription className="text-fg-secondary">
               This sandbox used a template that is incompatible with the
               filesystem inspector. To use the inspector in any new sandbox you
-              launch,{' '}
-              <span className="text-fg font-medium">rebuild the template</span>.
+              launch, <span className="text-fg ">rebuild the template</span>.
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-auto flex-1 p-0">
             {templateNameOrId && (
-              <ol className="ml-4 list-decimal space-y-6 font-sans leading-5">
-                <li className="text-fg flex-col space-y-3 marker:font-semibold">
-                  <p className="font-semibold">
+              <ol className="ml-4 list-decimal space-y-6 font-sans marker:prose-body-highlight">
+                <li className="text-fg flex-col space-y-3">
+                  <p className="prose-body-highlight">
                     Navigate to your template's folder
                   </p>
                   <CodeBlock className="-ml-4" lang="bash">
                     {`cd path/to/your/template`}
                   </CodeBlock>
-                  <div className="text-fg-300 -ml-4 inline-block">
+                  <div className="text-fg-secondary -ml-4 inline-block">
                     The folder should contain an{' '}
-                    <Badge className={codeClassNames} variant="outline">
-                      e2b.toml
-                    </Badge>{' '}
-                    file.
+                    <Badge className={codeClassNames}>e2b.toml</Badge> file.
                   </div>
                 </li>
 
-                <li className="text-fg flex-col space-y-3 marker:font-semibold">
-                  <p className="font-semibold">Rebuild the template</p>
-                  <div className="text-fg-300 -ml-4 inline-block leading-6">
+                <li className="text-fg flex-col space-y-3">
+                  <p className="prose-body-highlight">Rebuild the template</p>
+                  <div className="text-fg-secondary -ml-4 inline-block leading-6">
                     Use{' '}
-                    <Badge className={codeClassNames} variant="outline">
-                      e2b template build
-                    </Badge>{' '}
+                    <Badge className={codeClassNames}>e2b template build</Badge>{' '}
                     along with custom{' '}
                     <Link
                       className="text-fg underline"
@@ -100,17 +95,15 @@ export default function SandboxInspectIncompatible({
                       start commands
                     </Link>{' '}
                     and any other arguments to rebuild. For example:
-                    <Badge className={codeClassNames} variant="outline">
-                      -c "start.sh"
-                    </Badge>
+                    <Badge className={codeClassNames}>-c "start.sh"</Badge>
                   </div>
                 </li>
 
-                <li className="text-fg flex-col space-y-3 marker:font-semibold">
-                  <p className="font-semibold">
+                <li className="text-fg flex-col space-y-3">
+                  <p className="prose-body-highlight">
                     New sandboxes have filesystem inspector
                   </p>
-                  <div className="text-fg-300 -ml-4 inline-block leading-6">
+                  <div className="text-fg-secondary -ml-4 inline-block leading-6">
                     Any new sandbox you launch will have filesystem inspector
                     enabled.{' '}
                     <b>This won&apos;t affect already started sandboxes.</b>
@@ -121,25 +114,23 @@ export default function SandboxInspectIncompatible({
           </CardContent>
           <CardFooter className="pt-auto justify-between border-none px-0 pb-0 max-md:flex-col max-md:gap-4">
             <Button
-              variant="ghost"
-              size="slate"
-              className="text-fg-500 hover:text-fg font-sans normal-case max-md:w-full max-md:justify-start"
+              variant="quaternary"
+              className="text-fg-tertiary hover:text-fg font-sans normal-case max-md:w-full max-md:justify-start"
               asChild
             >
-              <Link href={PROTECTED_URLS.SANDBOXES(teamIdOrSlug)}>
-                <ChevronLeft className="size-5" />
-                Back to Sandboxes
+              <Link href={PROTECTED_URLS.SANDBOXES}>
+                <ChevronLeftIcon className="size-5" />
+                Back to sandboxes
               </Link>
             </Button>
             <Button
-              size="lg"
-              variant="outline"
+              variant="secondary"
               className="pr-3 font-sans normal-case max-md:w-full"
               asChild
             >
               <Link href={HELP_URLS.BUILD_TEMPLATE} target="_blank">
                 Documentation{' '}
-                <ArrowUpRight className="text-border-500 size-5 !stroke-[1px]" />
+                <ExternalLinkIcon className="text-fill-highlight size-5 stroke-[1px]!" />
               </Link>
             </Button>
           </CardFooter>

@@ -1,20 +1,26 @@
 'use client'
 
-import { useContent } from './hooks/use-content'
-import { useShikiTheme } from '@/configs/shiki'
-import ShikiHighlighter, { Language } from 'react-shiki'
-import { useErrorPaths, useSelectedPath } from './hooks/use-node'
-import SandboxInspectFrame from './frame'
-import SandboxInspectViewerHeader from './viewer-header'
-import { ScrollArea, ScrollBar } from '@/ui/primitives/scroll-area'
-import { useFile } from './hooks/use-file'
-import { Drawer, DrawerContent } from '@/ui/primitives/drawer'
-import { useIsMobile } from '@/lib/hooks/use-mobile'
+import { AnimatePresence } from 'motion/react'
 import { useEffect, useState } from 'react'
-import { Button } from '@/ui/primitives/button'
-import { Download } from 'lucide-react'
-import { AnimatePresence } from 'framer-motion'
+import ShikiHighlighter, { type Language } from 'react-shiki'
+import { useShikiTheme } from '@/configs/shiki'
+import { useIsMobile } from '@/lib/hooks/use-mobile'
 import { cn } from '@/lib/utils'
+import { Button } from '@/ui/primitives/button'
+import { Drawer, DrawerContent } from '@/ui/primitives/drawer'
+import { DownloadIcon } from '@/ui/primitives/icons'
+import { ScrollArea, ScrollBar } from '@/ui/primitives/scroll-area'
+
+import {
+  MAX_VIEWABLE_FILE_SIZE_BYTES,
+  type UnreadableFileTypeContentState,
+  type UnreadableTooLargeContentState,
+} from './filesystem/store'
+import SandboxInspectFrame from './frame'
+import { useContent } from './hooks/use-content'
+import { useFile } from './hooks/use-file'
+import { useErrorPaths, useSelectedPath } from './hooks/use-node'
+import SandboxInspectViewerHeader from './viewer-header'
 
 export default function SandboxInspectViewer() {
   const path = useSelectedPath()
@@ -27,12 +33,23 @@ export default function SandboxInspectViewer() {
     if (path && !errorPaths.has(path)) {
       setOpen(true)
     }
+
+    if (!path) {
+      setOpen(false)
+    }
   }, [path, errorPaths])
+
+  const handleClose = () => {
+    setOpen(false)
+  }
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="mt-4 h-[90svh] overflow-hidden p-0">
+      <Drawer dismissible={false} open={open} onOpenChange={handleClose}>
+        <DrawerContent
+          className="mt-4 h-[90svh] overflow-hidden p-0"
+          showDragHandle={false}
+        >
           <AnimatePresence mode="wait">
             {path && <SandboxInspectViewerContent key="viewer" path={path} />}
           </AnimatePresence>
@@ -48,7 +65,13 @@ export default function SandboxInspectViewer() {
   )
 }
 
-function SandboxInspectViewerContent({ path }: { path: string }) {
+function SandboxInspectViewerContent({
+  path,
+  onClose,
+}: {
+  path: string
+  onClose?: () => void
+}) {
   const { name, isLoading, refresh, toggle, download } = useFile(path)
   const { state } = useContent(path)
   const shikiTheme = useShikiTheme()
@@ -82,7 +105,10 @@ function SandboxInspectViewerContent({ path }: { path: string }) {
           fileContentState={state}
           isLoading={isLoading}
           onRefresh={refresh}
-          onClose={toggle}
+          onClose={() => {
+            onClose?.()
+            toggle()
+          }}
           onDownload={download}
         />
       }
@@ -97,7 +123,7 @@ function SandboxInspectViewerContent({ path }: { path: string }) {
       ) : state.type === 'image' ? (
         <ImageContent name={name} dataUri={state.dataUri} />
       ) : (
-        <UnreadableContent onDownload={download} />
+        <UnreadableContent state={state} onDownload={download} />
       )}
     </SandboxInspectFrame>
   )
@@ -128,10 +154,10 @@ function TextContent({
   if (content.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3">
-        <span className="text-fg-300 text-sm">This file is empty.</span>
-        <Button variant="warning" size="sm" onClick={onDownload}>
+        <span className="text-fg-secondary">This file is empty.</span>
+        <Button variant="secondary" onClick={onDownload}>
           Download
-          <Download className="ml-1.5 h-4 w-4" />
+          <DownloadIcon />
         </Button>
       </div>
     )
@@ -165,7 +191,6 @@ interface ImageContentProps {
 function ImageContent({ name, dataUri }: ImageContentProps) {
   return (
     <div className="flex h-full w-full items-center justify-center overflow-auto p-2">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={dataUri}
         alt={name}
@@ -175,17 +200,35 @@ function ImageContent({ name, dataUri }: ImageContentProps) {
   )
 }
 
-interface UnreadableContent {
+interface UnreadableContentProps {
+  state: UnreadableFileTypeContentState | UnreadableTooLargeContentState
   onDownload: () => void
 }
 
-function UnreadableContent({ onDownload }: UnreadableContent) {
+function UnreadableContent({ state, onDownload }: UnreadableContentProps) {
+  const maxSizeMB = (MAX_VIEWABLE_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0)
+
+  if (state.reason === 'too_large') {
+    const sizeMB = (state.size / 1024 / 1024).toFixed(1)
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3">
+        <span className="text-fg-secondary">
+          File is too large to preview ({sizeMB} MB). Limit is {maxSizeMB} MB.
+        </span>
+        <Button variant="secondary" onClick={onDownload}>
+          Download
+          <DownloadIcon />
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3">
-      <span className="text-fg-300 text-sm">This file is not readable.</span>
-      <Button variant="warning" size="sm" onClick={onDownload}>
+      <span className="text-fg-secondary">This file is not readable.</span>
+      <Button variant="secondary" onClick={onDownload}>
         Download
-        <Download className="ml-1.5 h-4 w-4" />
+        <DownloadIcon />
       </Button>
     </div>
   )

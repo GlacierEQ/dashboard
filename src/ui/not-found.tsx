@@ -1,8 +1,7 @@
 'use client'
 
-import { PROTECTED_URLS } from '@/configs/urls'
-import { ArrowLeft, HomeIcon, LayoutDashboard } from 'lucide-react'
 import Link from 'next/link'
+import { PROTECTED_URLS } from '@/configs/urls'
 import { Button } from './primitives/button'
 import {
   Card,
@@ -10,46 +9,44 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from './primitives/card'
+import { ArrowLeftIcon, GridIcon, HomeIcon } from './primitives/icons'
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-[80vh] items-center justify-center">
-      <Card className="w-full max-w-md border border-border bg-bg-100/40 backdrop-blur-lg">
+    <div className="flex w-full items-start justify-center pt-16 md:pt-24">
+      <Card className="w-full max-w-md border border-stroke bg-bg-1/40 backdrop-blur-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-light">404</CardTitle>
-          <CardDescription className="mt-2 text-lg">
-            Page Not Found
-          </CardDescription>
+          <span className="prose-value-big">404</span>
+          <CardDescription>Page not found.</CardDescription>
         </CardHeader>
-        <CardContent className="text-center text-fg-500">
+        <CardContent className="text-center text-fg-secondary">
           <p>
             The page you are looking for might have been removed, had its name
             changed, or is temporarily unavailable.
           </p>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 pt-4">
-          <div className="flex w-full justify-between gap-4">
-            <Button variant="outline" asChild className="flex-1">
-              <Link href="/" className="gap-2">
-                <HomeIcon className="h-4 w-4 text-fg-500" />
+        <CardFooter className="flex flex-col gap-1">
+          <div className="flex w-full gap-1">
+            <Button variant="secondary" asChild className="flex-1">
+              <Link href="/">
+                <HomeIcon />
                 Home
               </Link>
             </Button>
-            <Button variant="outline" asChild className="flex-1">
-              <Link href={PROTECTED_URLS.DASHBOARD} className="gap-2">
-                <LayoutDashboard className="h-4 w-4 text-fg-500" />
+            <Button variant="secondary" asChild className="flex-1">
+              <Link href={PROTECTED_URLS.SANDBOXES}>
+                <GridIcon />
                 Dashboard
               </Link>
             </Button>
           </div>
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => window.history.back()}
-            className="w-full gap-2"
+            className="w-full"
           >
-            <ArrowLeft className="h-4 w-4 text-fg-500" />
+            <ArrowLeftIcon />
             Go Back
           </Button>
         </CardFooter>

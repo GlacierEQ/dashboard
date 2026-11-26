@@ -1,7 +1,7 @@
 'use client'
 
+import type { FC } from 'react'
 import { cn } from '@/lib/utils'
-import { FC } from 'react'
 import { Button } from './primitives/button'
 import {
   Dialog,
@@ -48,10 +48,10 @@ export const AlertDialog: FC<AlertDialogProps> = ({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        {children && <div className="py-4">{children}</div>}
+        {children && <div className="py-2">{children}</div>}
         <DialogFooter className={cn(!children && 'border-t-0')}>
           <DialogClose asChild>
-            <Button variant="outline">{cancel}</Button>
+            <Button variant="quaternary">{cancel}</Button>
           </DialogClose>
           <Button
             variant="error"

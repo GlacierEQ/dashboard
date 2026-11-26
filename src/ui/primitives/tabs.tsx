@@ -1,10 +1,9 @@
 'use client'
 
 import * as TabsPrimitive from '@radix-ui/react-tabs'
-import * as React from 'react'
-
-import { cn, exponentialSmoothing } from '@/lib/utils'
 import { motion } from 'motion/react'
+import * as React from 'react'
+import { cn, exponentialSmoothing } from '@/lib/utils'
 
 const TabsContext = React.createContext<{
   value?: string
@@ -17,21 +16,28 @@ function Tabs({
   onValueChange,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Root>) {
-  const [stateValue, setStateValue] = React.useState(defaultValue ?? value)
+  const isControlled = value !== undefined
+  const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue)
 
-  React.useEffect(() => {
-    if (!stateValue) return
+  const currentValue = isControlled ? value : uncontrolledValue
 
-    onValueChange?.(stateValue)
-  }, [stateValue, onValueChange])
+  const handleValueChange = React.useCallback(
+    (nextValue: string) => {
+      if (!isControlled) {
+        setUncontrolledValue(nextValue)
+      }
+      onValueChange?.(nextValue)
+    },
+    [isControlled, onValueChange]
+  )
 
   return (
-    <TabsContext.Provider value={{ value: stateValue }}>
+    <TabsContext.Provider value={{ value: currentValue }}>
       <TabsPrimitive.Root
         data-slot="tabs"
         className={cn('flex flex-col', className)}
-        value={stateValue}
-        onValueChange={setStateValue}
+        value={currentValue}
+        onValueChange={handleValueChange}
         {...props}
       />
     </TabsContext.Provider>
@@ -46,7 +52,7 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        'inline-flex h-9 w-fit items-center justify-center gap-3 border-b px-6',
+        'inline-flex h-9 w-fit items-center justify-center gap-6 border-b px-6 max-md:px-3',
         className
       )}
       {...props}
@@ -58,25 +64,27 @@ function TabsTrigger({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+}: React.ComponentProps<typeof TabsPrimitive.Trigger> & { layoutkey: string }) {
   const { value } = React.useContext(TabsContext)
   const isSelected = value === props.value
 
   return (
-    <TabsPrimitive.Trigger
-      data-slot="tabs-trigger"
-      className={cn(
-        "relative inline-flex h-8.25 flex-1 cursor-pointer items-center justify-center gap-1.5 pb-1.5 whitespace-nowrap !text-[hsl(var(--color-accent))] text-[hsl(var(--color-fg-300))] transition-[color,box-shadow] hover:text-[hsl(var(--color-fg-200))] focus-visible:ring-1 focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-[hsl(var(--color-fg))] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        'focus-visible:border-[hsl(var(--color-ring))] focus-visible:ring-[hsl(var(--color-ring)/0.5)] focus-visible:outline-[hsl(var(--color-ring))]',
-        className
-      )}
-      {...props}
-    >
-      {children}
+    <div className="relative">
+      <TabsPrimitive.Trigger
+        data-slot="tabs-trigger"
+        className={cn(
+          "relative inline-flex h-8.25 flex-1 prose-body-highlight cursor-pointer items-center justify-center gap-1.5 pb-1.5 whitespace-nowrap text-fg-tertiary transition-[color,box-shadow] hover:text-fg-secondary focus-visible:ring-1 focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-fg [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+          'focus-visible:border-ring focus-visible:ring-ring focus-visible:outline-ring',
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </TabsPrimitive.Trigger>
       {isSelected && (
         <motion.div
-          layoutId="tabs-indicator"
-          className="border-accent absolute inset-0 -bottom-0.5 border-b"
+          layoutId={props.layoutkey}
+          className="border-accent-main-highlight absolute inset-0 -bottom-0.5 border-b"
           initial={false}
           transition={{
             duration: 0.4,
@@ -84,7 +92,7 @@ function TabsTrigger({
           }}
         />
       )}
-    </TabsPrimitive.Trigger>
+    </div>
   )
 }
 

@@ -1,5 +1,6 @@
+import type React from 'react'
 import { cn } from '@/lib/utils'
-import React from 'react'
+import { formatNumber } from '@/lib/utils/formatting'
 
 export interface ResourceUsageProps {
   type: 'cpu' | 'mem' | 'disk'
@@ -9,7 +10,6 @@ export interface ResourceUsageProps {
   mode?: 'usage' | 'simple'
   classNames?: {
     wrapper?: string
-    dot?: string
   }
 }
 
@@ -26,11 +26,29 @@ const ResourceUsage: React.FC<ResourceUsageProps> = ({
   const hasMetrics = metrics !== null && metrics !== undefined
 
   if (mode === 'simple') {
-    const displayTotal = total ? total.toLocaleString() : 'n/a'
+    const hasValue = total !== null && total !== undefined && total !== 0
+    const displayTotal = hasValue ? formatNumber(total) : '--'
     return (
-      <p className="text-sm">
-        {displayTotal} {unit}
-        {isCpu && total && total > 1 ? 's' : ''}
+      <p
+        className={cn(
+          'flex justify-end gap-1 prose-table',
+          classNames?.wrapper
+        )}
+      >
+        <span
+          className={cn(
+            'prose-table-numeric',
+            hasValue ? 'text-fg-secondary' : 'text-fg-tertiary'
+          )}
+        >
+          {displayTotal}
+        </span>
+        {hasValue && (
+          <span className="text-fg-tertiary">
+            {unit}
+            {isCpu && total && total > 1 ? 's' : ''}
+          </span>
+        )}
       </p>
     )
   }
@@ -44,26 +62,26 @@ const ResourceUsage: React.FC<ResourceUsageProps> = ({
 
   const textClassName = cn(
     roundedPercentage >= (isCpu ? 90 : 95)
-      ? 'text-error'
+      ? 'text-accent-error-highlight'
       : roundedPercentage >= 70
-        ? 'text-warning'
+        ? 'text-accent-warning-highlight'
         : 'text-fg'
   )
 
-  const displayValue = hasMetrics ? metrics.toLocaleString() : 'n/a'
-  const totalValue = total ? total.toLocaleString() : 'n/a'
+  const displayValue = hasMetrics ? formatNumber(metrics) : '--'
+  const totalValue = total ? formatNumber(total) : '--'
 
   return (
     <span
       className={cn(
-        'text-fg-500 inline w-full truncate font-mono whitespace-nowrap',
+        'text-fg-tertiary inline w-full overflow-x-hidden whitespace-nowrap',
         classNames?.wrapper
       )}
     >
       {hasMetrics ? (
         <>
           <span className={textClassName}>{roundedPercentage}% </span>
-          <span className={cn('text-fg-500', classNames?.dot)}>·</span>
+          <span className="text-fg-tertiary mx-1">·</span>
           {!isCpu && (
             <>
               <span className={textClassName}> {displayValue}</span> /
@@ -72,11 +90,11 @@ const ResourceUsage: React.FC<ResourceUsageProps> = ({
         </>
       ) : (
         <>
-          <span className="text-fg-500">n/a </span>
-          <span className={cn('text-fg-500', classNames?.dot)}>·</span>
+          <span className="text-fg-tertiary">-- </span>
+          <span className="text-fg-tertiary mx-1">·</span>
         </>
       )}
-      <span className="text-contrast-1"> {totalValue} </span> {unit}
+      <span className="text-accent-info-highlight"> {totalValue} </span> {unit}
       {isCpu && total && total > 1 ? 's' : ''}
     </span>
   )

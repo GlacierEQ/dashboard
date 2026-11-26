@@ -1,9 +1,13 @@
-import { cn } from '@/lib/utils'
-import { DataTableRow } from '@/ui/data-table'
-import { FolderUp } from 'lucide-react'
+'use client'
+
 import { useRouter } from 'next/navigation'
-import path from 'path'
 import { useTransition } from 'react'
+import { COOKIE_KEYS } from '@/configs/cookies'
+import { cn } from '@/lib/utils'
+import { setBrowserCookie } from '@/lib/utils/browser-cookies'
+import { getParentPath } from '@/lib/utils/filesystem'
+import { DataTableRow } from '@/ui/data-table'
+import { FolderUploadIcon } from '@/ui/primitives/icons'
 
 interface SandboxInspectParentDirItemProps {
   rootPath: string
@@ -21,14 +25,10 @@ export default function SandboxInspectParentDirItem({
   }
 
   const handleNavigateUp = async () => {
-    const parentPath = path.dirname(rootPath)
+    const parentPath = getParentPath(rootPath)
 
     try {
-      await fetch('/api/sandbox/inspect/root-path', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: parentPath }),
-      })
+      setBrowserCookie(COOKIE_KEYS.SANDBOX_INSPECT_ROOT_PATH, parentPath)
 
       startTransition(() => {
         router.refresh()
@@ -43,7 +43,7 @@ export default function SandboxInspectParentDirItem({
       role="button"
       tabIndex={0}
       className={cn(
-        'hover:bg-bg-200 focus:ring-ring text-fg-500 focus:bg-bg-200 h-7 min-h-7 cursor-pointer gap-1.5 pl-1.5 transition-none group-[data-slot=inspect-dir]:px-2 even:bg-transparent focus:outline-none',
+        'hover:bg-bg-hover border-b-0 focus:ring-ring text-fg-tertiary focus:bg-bg-hover h-7 min-h-7 cursor-pointer gap-1.5 pl-1.5 transition-none group-[data-slot=inspect-dir]:px-2 even:bg-transparent focus:outline-none',
         isPending && 'opacity-70'
       )}
       onClick={handleNavigateUp}
@@ -53,7 +53,7 @@ export default function SandboxInspectParentDirItem({
         }
       }}
     >
-      <FolderUp className="size-3.5 [color:var(--color-fg-500)]" />
+      <FolderUploadIcon className="size-3.5 [color:var(--color-fg-tertiary)]" />
       <span className="truncate">..</span>
     </DataTableRow>
   )

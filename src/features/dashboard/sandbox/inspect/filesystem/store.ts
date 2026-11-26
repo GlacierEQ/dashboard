@@ -1,40 +1,50 @@
 'use client'
 
+import { enableMapSet } from 'immer'
+import { create } from 'zustand'
+import { immer } from 'zustand/middleware/immer'
 import {
   getBasename,
   getParentPath,
   isChildPath,
   normalizePath,
 } from '@/lib/utils/filesystem'
-import { enableMapSet } from 'immer'
-import { create } from 'zustand'
-import { immer } from 'zustand/middleware/immer'
-import { FilesystemNode } from './types'
+import type { FilesystemNode } from './types'
 
 enableMapSet()
+
+export const MAX_VIEWABLE_FILE_SIZE_BYTES = 15 * 1024 * 1024 // 15MB
 
 interface FilesystemStatics {
   rootPath: string
 }
 
-interface ContentFileContentState {
-  text: string
+export interface TextFileContentState {
   type: 'text'
+  text: string
 }
 
-interface UnreadableFileContentState {
-  type: 'unreadable'
-}
-
-interface ImageFileContentState {
-  dataUri: string
+export interface ImageFileContentState {
   type: 'image'
+  dataUri: string
+}
+
+export interface UnreadableFileTypeContentState {
+  type: 'unreadable'
+  reason: 'file_type'
+}
+
+export interface UnreadableTooLargeContentState {
+  type: 'unreadable'
+  reason: 'too_large'
+  size: number
 }
 
 export type FileContentState =
-  | ContentFileContentState
-  | UnreadableFileContentState
+  | TextFileContentState
   | ImageFileContentState
+  | UnreadableFileTypeContentState
+  | UnreadableTooLargeContentState
 
 export type FileContentStateType = FileContentState['type']
 

@@ -1,8 +1,8 @@
 'use client'
 
+import { motion } from 'motion/react'
+import type React from 'react'
 import { cn } from '@/lib/utils'
-import React from 'react'
-import { motion } from 'framer-motion'
 
 type SandboxInspectFrameProps = React.ComponentProps<typeof motion.div> & {
   header: React.ReactNode

@@ -8,6 +8,7 @@
 
 # testing
 /coverage
+/test-results
 
 # next.js
 /.next/
@@ -37,10 +38,19 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# fuma-docs
-/.source
+# AI agents and related files
+.cursor/
+.agent
+
+## Claude
+.claude/*.local.json
+.claude/**/*.local.md
+.claude/worktrees
+CLAUDE.local.md
+
+# Cursor IDE
+.cursor/
 
 # tooling
 /template
-# Sentry Config File
-.env.sentry-build-plugin
+.env*

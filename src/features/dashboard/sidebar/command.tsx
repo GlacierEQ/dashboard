@@ -1,8 +1,9 @@
 'use client'
 
-import { ALL_DASHBOARD_LINKS } from '@/configs/dashboard-navs'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { SIDEBAR_ALL_LINKS } from '@/configs/sidebar'
 import useKeydown from '@/lib/hooks/use-keydown'
-import { useSelectedTeam } from '@/lib/hooks/use-teams'
 import { cn } from '@/lib/utils'
 import {
   CommandDialog,
@@ -18,9 +19,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/ui/primitives/sidebar'
-import { Terminal } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 interface DashboardSidebarCommandProps {
   className?: string
@@ -30,8 +28,8 @@ export default function DashboardSidebarCommand({
   className,
 }: DashboardSidebarCommandProps) {
   const [open, setOpen] = useState(false)
-  const selectedTeam = useSelectedTeam()
   const router = useRouter()
+  const visibleLinks = SIDEBAR_ALL_LINKS
 
   const { open: sidebarOpen, openMobile: sidebarOpenMobile } = useSidebar()
   const isSidebarOpen = sidebarOpen || sidebarOpenMobile
@@ -39,8 +37,7 @@ export default function DashboardSidebarCommand({
   useKeydown((event) => {
     if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault()
-      event.stopPropagation()
-      setOpen(true)
+      setOpen((prev) => !prev)
     }
 
     return true
@@ -48,38 +45,44 @@ export default function DashboardSidebarCommand({
 
   return (
     <>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="transition-[margin,padding] mx-3 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:!p-0 ">
         <SidebarMenuButton
-          tooltip="Jump"
+          tooltip="Go to..."
           variant={isSidebarOpen ? 'outline' : 'default'}
-          className={cn('text-fg-500 relative h-10 transition-all', className)}
+          className={cn(
+            'text-fg-tertiary relative transition-all pl-3 !font-normal',
+            'group-data-[collapsible=icon]:border-x-0 group-data-[collapsible=icon]:border-y group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!p-0',
+            className
+          )}
           onClick={() => setOpen(true)}
         >
-          <Terminal className="text-fg-500 size-4" />
-          Jump to
-          <Kbd keys={['cmd', 'k']} className="pointer-events-none ml-auto" />
+          <span className="group-data-[collapsible=icon]:hidden">
+            &gt; Go to
+          </span>
+          <Kbd
+            keys={['cmd', 'k']}
+            className="pointer-events-none group-data-[collapsible=icon]:mx-auto ml-auto"
+            badgeProps={{
+              className: 'group-data-[collapsible=icon]:!bg-transparent',
+            }}
+          />
         </SidebarMenuButton>
       </SidebarMenuItem>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Quick Jump to..." />
-        <CommandList className="p-1 pb-3">
+        <CommandList className="scroll-py-3 px-1 py-3">
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Pages">
-            {ALL_DASHBOARD_LINKS.map((link) => (
+            {visibleLinks.map((link) => (
               <CommandItem
                 key={link.label}
                 onSelect={() => {
-                  router.push(
-                    link.href({
-                      teamIdOrSlug:
-                        selectedTeam?.slug ?? selectedTeam?.id ?? undefined,
-                    })
-                  )
+                  router.push(link.href)
                   setOpen(false)
                 }}
                 className="group"
               >
-                <link.icon className="text-fg-500 group-[&[data-selected=true]]:text-accent !size-4" />
+                <link.icon className="text-fg-tertiary group-[&[data-selected=true]]:text-accent-main-highlight  !size-4" />
                 {link.label}
               </CommandItem>
             ))}

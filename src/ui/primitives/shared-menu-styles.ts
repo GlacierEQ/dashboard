@@ -1,22 +1,24 @@
+import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { cardVariants } from '@/ui/primitives/card'
-import { cva } from 'class-variance-authority'
 
 export const menuItemVariants = cva(
   [
-    'relative flex cursor-pointer rounded-sm select-none items-center gap-2',
+    'relative prose-body flex cursor-pointer select-none items-center gap-2',
     'px-2 py-1.5',
-    'font-mono text-xs',
     'outline-none',
     'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
   ],
   {
     variants: {
       variant: {
-        default: 'focus:bg-accent/10 focus:text-accent',
-        error: 'text-red-500 focus:bg-red-500/10 focus:text-red-500',
-        success: 'text-green-500 focus:bg-green-500/10 focus:text-green-500',
-        warning: 'text-yellow-500 focus:bg-yellow-500/10 focus:text-yellow-500',
+        default: 'focus:bg-bg-highlight',
+        error:
+          'text-accent-error-highlight focus:bg-accent-error-bg focus:text-accent-error-highlight',
+        success:
+          'text-accent-positive-highlight focus:bg-accent-positive-bg focus:text-accent-positive-highlight',
+        warning:
+          'text-accent-warning-highlight focus:bg-accent-warning-bg focus:text-accent-warning-highlight',
       },
     },
     defaultVariants: {
@@ -26,7 +28,7 @@ export const menuItemVariants = cva(
 )
 
 export const menuContentStyles = cn(
-  'z-50 min-w-[8rem] overflow-hidden rounded-sm p-2',
+  'z-50 min-w-[8rem] overflow-hidden  p-2',
   cardVariants({ variant: 'layer' }),
   'shadow-sm',
   'data-[state=open]:animate-in data-[state=closed]:animate-out',
@@ -38,12 +40,12 @@ export const menuContentStyles = cn(
   'data-[side=top]:slide-in-from-bottom-2'
 )
 
-export const menuLabelStyles = cn('font-mono text-xs uppercase', 'text-fg-500')
-
-export const menuSeparatorStyles = cn(
-  '-mx-2 my-2',
-  'border-t border-dashed border-border-200'
+export const menuLabelStyles = cn(
+  'font-mono text-xs uppercase',
+  'text-fg-tertiary'
 )
+
+export const menuSeparatorStyles = cn('-mx-2 my-2', 'border-t')
 
 export const menuViewportStyles = cn('p-1')
 

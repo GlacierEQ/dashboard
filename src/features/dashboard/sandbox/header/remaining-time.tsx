@@ -1,11 +1,12 @@
 'use client'
 
+import { motion } from 'motion/react'
+import { useCallback, useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/ui/primitives/badge'
 import { Button } from '@/ui/primitives/button'
-import { RefreshCw, StopCircle } from 'lucide-react'
-import { motion } from 'motion/react'
-import { useCallback, useEffect, useState } from 'react'
+import { IconButton } from '@/ui/primitives/icon-button'
+import { DotIcon, RefreshIcon } from '@/ui/primitives/icons'
 import { useSandboxContext } from '../context'
 
 export default function RemainingTime() {
@@ -32,7 +33,7 @@ export default function RemainingTime() {
     }, 1000)
 
     return () => clearInterval(id)
-  }, [endAt, getRemainingSeconds])
+  }, [getRemainingSeconds])
 
   const hours = Math.floor(remaining / 3600)
   const minutes = Math.floor((remaining % 3600) / 60)
@@ -44,8 +45,8 @@ export default function RemainingTime() {
 
   if (!isRunning) {
     return (
-      <Badge variant="muted">
-        <StopCircle className="size-3" /> Stopped
+      <Badge>
+        <DotIcon className="size-3 fill-current" /> Stopped
       </Badge>
     )
   }
@@ -54,24 +55,22 @@ export default function RemainingTime() {
     <div className="flex items-center gap-2">
       <p suppressHydrationWarning>{formatted}</p>
       <motion.div
+        className="flex items-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: remaining === 0 ? 1 : 0 }}
         transition={{ duration: 0.2 }}
         style={{ pointerEvents: remaining === 0 ? 'auto' : 'none' }}
       >
-        <Button
-          variant="ghost"
-          size="slate"
+        <IconButton
           onClick={refetchSandboxInfo}
           disabled={isSandboxInfoLoading}
-          asChild
         >
-          <RefreshCw
-            className={cn('size-3', {
-              'animate-spin duration-300 ease-in-out': isSandboxInfoLoading,
-            })}
+          <RefreshIcon
+            className={cn(
+              isSandboxInfoLoading && 'animate-spin duration-300 ease-in-out'
+            )}
           />
-        </Button>
+        </IconButton>
       </motion.div>
     </div>
   )

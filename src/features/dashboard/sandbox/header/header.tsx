@@ -1,139 +1,75 @@
-import { COOKIE_KEYS } from '@/configs/keys'
-import { PROTECTED_URLS } from '@/configs/urls'
-import { SandboxInfo } from '@/types/api'
-import { ChevronLeftIcon } from 'lucide-react'
-import { cookies } from 'next/headers'
-import Link from 'next/link'
+'use client'
+
+import { Skeleton } from '@/ui/primitives/skeleton'
+import { DetailsItem, DetailsRow } from '../../layouts/details-row'
+import { useSandboxContext } from '../context'
+import EndedAt from './ended-at'
 import Metadata from './metadata'
 import RanFor from './ran-for'
-import RefreshControl from './refresh'
 import RemainingTime from './remaining-time'
-import { ResourceUsageClient } from './resource-usage-client'
+import { CpuSpecItem, DiskSpecItem, MemorySpecItem } from './spec-items'
 import StartedAt from './started-at'
 import Status from './status'
 import TemplateId from './template-id'
-import SandboxDetailsTitle from './title'
 
-interface SandboxDetailsHeaderProps {
-  teamIdOrSlug: string
-  state: SandboxInfo['state']
-}
+export default function SandboxDetailsHeader() {
+  const { isRunning, sandboxInfo, isSandboxInfoLoading } = useSandboxContext()
 
-export default async function SandboxDetailsHeader({
-  teamIdOrSlug,
-  state,
-}: SandboxDetailsHeaderProps) {
-  const initialPollingInterval = (await cookies()).get(
-    COOKIE_KEYS.SANDBOX_INSPECT_POLLING_INTERVAL
-  )?.value
+  const isInitialLoading = isSandboxInfoLoading && !sandboxInfo
+  const isKilled = sandboxInfo?.state === 'killed'
+  const isPaused = sandboxInfo?.state === 'paused'
 
-  const headerItems = {
-    state: {
-      label: 'status',
-      value: <Status />,
-    },
-    templateID: {
-      label: 'template',
-      value: <TemplateId />,
-    },
-    metadata: {
-      label: 'metadata',
-      value: <Metadata />,
-    },
-    remainingTime: {
-      label: 'timeout in',
-      value: <RemainingTime />,
-    },
-    startedAt: {
-      label: 'created at',
-      value: <StartedAt />,
-    },
-    endAt: {
-      label: state === 'running' ? 'running for' : 'ran for',
-      value: <RanFor />,
-    },
-    cpuCount: {
-      label: 'CPU Usage',
-      value: (
-        <ResourceUsageClient
-          type="cpu"
-          mode="usage"
-          classNames={{
-            dot: 'mx-1',
-          }}
-        />
-      ),
-    },
-    memoryMB: {
-      label: 'Memory Usage',
-      value: (
-        <ResourceUsageClient
-          type="mem"
-          mode="usage"
-          classNames={{
-            dot: 'mx-1',
-          }}
-        />
-      ),
-    },
-    diskGB: {
-      label: 'Disk Usage',
-      value: (
-        <ResourceUsageClient
-          type="disk"
-          mode="usage"
-          classNames={{
-            dot: 'mx-1',
-          }}
-        />
-      ),
-    },
-  }
+  const runningLabel = isInitialLoading || isRunning ? 'running for' : 'ran for'
+  const timeoutLabel = isKilled
+    ? 'killed at'
+    : isPaused
+      ? 'paused at'
+      : 'timeout in'
+
+  const timeoutContent = isKilled || isPaused ? <EndedAt /> : <RemainingTime />
+  const statusContent = <Status />
+  const templateContent = <TemplateId />
+  const metadataContent = <Metadata />
+  const createdAtContent = <StartedAt />
+  const runningDurationContent = <RanFor />
+  const cpuSpecContent = <CpuSpecItem />
+  const memorySpecContent = <MemorySpecItem />
+  const diskSpecContent = <DiskSpecItem />
+
+  const renderContent = (content: React.ReactNode, skeletonWidth: string) =>
+    isInitialLoading ? <Skeleton className={`h-5 ${skeletonWidth}`} /> : content
 
   return (
-    <header className="bg-bg relative z-30 flex w-full flex-col gap-8 p-4 max-md:py-2">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <Link
-            href={PROTECTED_URLS.SANDBOXES(teamIdOrSlug)}
-            className="text-fg-300 hover:text-fg flex items-center gap-1.5 transition-colors"
-            prefetch
-            shallow
-          >
-            <ChevronLeftIcon className="size-5" />
-            Sandboxes
-          </Link>
-          <SandboxDetailsTitle />
-        </div>
-        <RefreshControl
-          initialPollingInterval={
-            initialPollingInterval
-              ? parseInt(initialPollingInterval)
-              : undefined
-          }
-          className="pt-4 sm:pt-0"
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-5 md:gap-7">
-        {Object.entries(headerItems).map(([key, { label, value }]) => (
-          <HeaderItem key={key} label={label} value={value} />
-        ))}
-      </div>
+    <header className="bg-bg relative z-30 w-full p-3 md:p-6">
+      <DetailsRow>
+        <DetailsItem label="status">
+          {renderContent(statusContent, 'w-20')}
+        </DetailsItem>
+        <DetailsItem label="template">
+          {renderContent(templateContent, 'w-28')}
+        </DetailsItem>
+        <DetailsItem label="metadata">
+          {renderContent(metadataContent, 'w-20')}
+        </DetailsItem>
+        <DetailsItem label="created at">
+          {renderContent(createdAtContent, 'w-32')}
+        </DetailsItem>
+        <DetailsItem label={timeoutLabel}>
+          {renderContent(timeoutContent, 'w-22')}
+        </DetailsItem>
+        <DetailsItem label={runningLabel}>
+          {renderContent(runningDurationContent, 'w-22')}
+        </DetailsItem>
+        <DetailsItem label="CPU">
+          {renderContent(cpuSpecContent, 'w-20')}
+        </DetailsItem>
+        <DetailsItem label="Memory">
+          {renderContent(memorySpecContent, 'w-20')}
+        </DetailsItem>
+        <DetailsItem label="Disk">
+          {renderContent(diskSpecContent, 'w-20')}
+        </DetailsItem>
+      </DetailsRow>
     </header>
-  )
-}
-
-interface HeaderItemProps {
-  label: string
-  value: string | React.ReactNode
-}
-
-function HeaderItem({ label, value }: HeaderItemProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-fg-500 text-xs uppercase">{label}</span>
-      {typeof value === 'string' ? <p className="text-sm">{value}</p> : value}
-    </div>
   )
 }

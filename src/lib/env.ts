@@ -1,22 +1,53 @@
 import { z } from 'zod'
 
-export const serverSchema = z.object({
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  INFRA_API_URL: z.string().url(),
-  KV_REST_API_TOKEN: z.string().min(1),
-  KV_REST_API_URL: z.string().url(),
-  NEXT_PUBLIC_E2B_DOMAIN: z.string(),
+function optionalValue<T extends z.ZodType>(schema: T) {
+  return z.preprocess(
+    (value) => (typeof value === 'string' ? value.trim() || undefined : value),
+    schema.optional()
+  )
+}
 
-  BILLING_API_URL: z.string().url().optional(),
-  ZEROBOUNCE_API_KEY: z.string().optional(),
+const httpUrl = optionalValue(
+  z.url({
+    protocol: /^https?$/,
+    error: 'Must be an http(s) URL, including the scheme',
+  })
+)
 
-  LOKI_SERVICE_NAME: z.string().optional(),
-  LOKI_HOST: z.string().url().optional(),
-  LOKI_USERNAME: z.string().optional(),
-  LOKI_PASSWORD: z.string().optional(),
+function deprecatedVariable(replacement: string) {
+  return z.undefined({
+    error: `Deprecated variable; remove it and use ${replacement} instead`,
+  })
+}
+
+export const runtimeEnvSchema = z.object({
+  PUBLIC_E2B_DOMAIN: z.string().trim().min(1, 'Set PUBLIC_E2B_DOMAIN'),
+  PUBLIC_SANDBOX_URL: httpUrl,
+  E2B_INFRA_API_URL: httpUrl,
+
+  // Reject the SDK alias too, or its own environment fallback can override routing.
+  E2B_SANDBOX_URL: deprecatedVariable('PUBLIC_SANDBOX_URL'),
+  NEXT_PUBLIC_E2B_DOMAIN: deprecatedVariable('PUBLIC_E2B_DOMAIN'),
+  NEXT_PUBLIC_INFRA_API_URL: deprecatedVariable('E2B_INFRA_API_URL'),
+  NEXT_PUBLIC_E2B_SANDBOX_URL: deprecatedVariable('PUBLIC_SANDBOX_URL'),
+})
+
+export const serverSchema = runtimeEnvSchema.extend({
+  // Pre-authenticates the deployment and skips the API key form.
+  E2B_API_KEY: z.string().min(1).optional(),
+  DASHBOARD_COOKIE_SECURE: optionalValue(
+    z
+      .string()
+      .toLowerCase()
+      .pipe(
+        z.enum(['true', 'false'], {
+          error: 'DASHBOARD_COOKIE_SECURE must be true or false',
+        })
+      )
+  ),
 
   OTEL_SERVICE_NAME: z.string().optional(),
-  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
+  OTEL_EXPORTER_OTLP_ENDPOINT: optionalValue(z.url()),
   OTEL_EXPORTER_OTLP_PROTOCOL: z
     .enum(['grpc', 'http/protobuf', 'http/json'])
     .optional(),
@@ -31,50 +62,31 @@ export const serverSchema = z.object({
   VERCEL_URL: z.string().optional(),
   VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   VERCEL_BRANCH_URL: z.string().optional(),
+  VERCEL_REGION: z.string().optional(),
+  VERCEL_DEPLOYMENT_ID: z.string().optional(),
+  VERCEL_GIT_COMMIT_SHA: z.string().optional(),
+  VERCEL_GIT_COMMIT_MESSAGE: z.string().optional(),
+  VERCEL_GIT_COMMIT_AUTHOR_NAME: z.string().optional(),
+  VERCEL_GIT_REPO_SLUG: z.string().optional(),
+  VERCEL_GIT_REPO_OWNER: z.string().optional(),
+  VERCEL_GIT_PROVIDER: z.string().optional(),
 })
 
 export const clientSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-
-  NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
-  NEXT_PUBLIC_INCLUDE_BILLING: z.string().optional(),
-  NEXT_PUBLIC_SCAN: z.string().optional(),
-  NEXT_PUBLIC_MOCK_DATA: z.string().optional(),
-  NEXT_PUBLIC_VERBOSE: z.string().optional(),
-
-  NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-  NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: z.string().optional(),
-  NEXT_PUBLIC_SENTRY_DEBUG: z.string().optional(),
+  NEXT_PUBLIC_VERCEL_ENV: z
+    .enum(['production', 'preview', 'development'])
+    .optional(),
 })
 
-export const testEnvSchema = z.object({
-  TEST_USER_EMAIL: z.string().email(),
-  TEST_USER_PASSWORD: z.string().min(8),
-})
+export const appEnvSchema = serverSchema.merge(clientSchema)
 
-/**
- * You can't destruct `process.env` as a regular object, so we do
- * a simple validation of the environment variables we need.
- */
-export const formatErrors = (errors: z.inferFlattenedErrors<z.AnyZodObject>) =>
-  Object.entries(errors.fieldErrors)
-    .map(([name, value]) => {
-      if (value) return `${name}: ${value.join(', ')}\n`
-    })
-    .filter(Boolean)
-
-const merged = serverSchema.merge(clientSchema)
-export type Env = z.infer<typeof merged>
+export type Env = z.infer<typeof appEnvSchema>
 
 export function validateEnv(schema: z.ZodSchema) {
   const parsed = schema.safeParse(process.env)
 
   if (!parsed.success) {
-    console.error(
-      '❌ Invalid environment variables:\n\n',
-      ...formatErrors(parsed.error.flatten())
-    )
+    console.error(z.prettifyError(parsed.error))
     process.exit(1)
   }
 

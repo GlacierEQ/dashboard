@@ -1,9 +1,11 @@
+'use client'
+
+import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { DataTableRow } from '@/ui/data-table'
-import { AlertCircle, FolderClosed, FolderOpen } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
-import SandboxInspectEmptyNode from './empty'
-import { FilesystemNode } from './filesystem/types'
+import { AlertIcon, FolderIcon, FolderOpenIcon } from '@/ui/primitives/icons'
+import SandboxInspectEmptyNode from './empty-node'
+import type { FilesystemNode } from './filesystem/types'
 import { useDirectory } from './hooks/use-directory'
 import SandboxInspectNode from './node'
 import NodeLabel from './node-label'
@@ -38,20 +40,20 @@ export default function SandboxInspectDir({ dir }: SandboxInspectDirProps) {
           }
         }}
         className={cn(
-          'group hover:bg-bg-200 focus:ring-ring focus:bg-bg-200 h-7 min-h-7 cursor-pointer gap-1.5 pl-1.5 truncate transition-none select-none even:bg-transparent focus:outline-none'
+          'group hover:bg-bg-hover border-b-0 focus:ring-ring focus:bg-bg-hover h-7 min-h-7 cursor-pointer gap-1.5 pl-1.5 truncate transition-none select-none even:bg-transparent focus:outline-none'
         )}
         data-slot="inspect-dir"
       >
         <span
           className={cn(
             'transition-colors duration-150',
-            isExpanded && isLoaded ? 'text-fg' : 'text-fg-500'
+            isExpanded && isLoaded ? 'text-fg' : 'text-fg-tertiary'
           )}
         >
           {isExpanded && isLoaded ? (
-            <FolderOpen className="size-3.5" />
+            <FolderOpenIcon className="size-3.5" />
           ) : (
-            <FolderClosed className="size-3.5" />
+            <FolderIcon className="size-3.5" />
           )}
         </span>
         <NodeLabel
@@ -60,8 +62,8 @@ export default function SandboxInspectDir({ dir }: SandboxInspectDirProps) {
           isLoading={isLoading}
         />
         {hasError && (
-          <span className="text-error flex items-center gap-1 truncate pt-0.5 pl-1 text-xs text-ellipsis">
-            <AlertCircle className="size-3" />
+          <span className="text-accent-error-highlight flex items-center gap-1 truncate pt-0.5 pl-1 text-xs text-ellipsis">
+            <AlertIcon className="size-3" />
             {error}
           </span>
         )}

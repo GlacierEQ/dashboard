@@ -1,184 +1,106 @@
 'use client'
 
-import { PROTECTED_URLS } from '@/configs/urls'
-import { useSelectedTeam, useTeams } from '@/lib/hooks/use-teams'
-import { useUser } from '@/lib/hooks/use-user'
+import { Portal } from '@radix-ui/react-portal'
+import { useState } from 'react'
+import { SIGN_OUT_URL } from '@/configs/urls'
 import { cn } from '@/lib/utils'
-import { signOutAction } from '@/server/auth/auth-actions'
-import { Avatar, AvatarFallback, AvatarImage } from '@/ui/primitives/avatar'
+import { E2BLogo } from '@/ui/brand'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/ui/primitives/dropdown-menu'
+import { LogOutIcon, UnpackIcon } from '@/ui/primitives/icons'
+import { Loader } from '@/ui/primitives/loader'
 import { SidebarMenuButton, SidebarMenuItem } from '@/ui/primitives/sidebar'
-import { Skeleton } from '@/ui/primitives/skeleton'
-import { ChevronsUpDown, LogOut, Plus, UserRoundCog } from 'lucide-react'
-import { PrefetchKind } from 'next/dist/client/components/router-reducer/router-reducer-types'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { CreateTeamDialog } from './create-team-dialog'
 
 interface DashboardSidebarMenuProps {
-  className?: string
+  // Hidden in env-key mode (E2B_API_KEY): the deployment is permanently
+  // authenticated and there is no cookie to clear.
+  showSignOut: boolean
 }
 
 export default function DashboardSidebarMenu({
-  className,
+  showSignOut,
 }: DashboardSidebarMenuProps) {
-  const { teams } = useTeams()
-  const { user } = useUser()
-  const selectedTeam = useSelectedTeam()
-  const router = useRouter()
-  const [createTeamOpen, setCreateTeamOpen] = useState(false)
-  const pathname = usePathname()
-
-  const handleTeamChange = async (teamId: string) => {
-    const team = teams.find((t) => t.id === teamId)
-
-    if (!team || !selectedTeam) return
-
-    await fetch('/api/team/state', {
-      method: 'POST',
-      body: JSON.stringify({ teamId: team.id, teamSlug: team.slug }),
-    })
-
-    router.push(
-      pathname
-        .replace(selectedTeam.slug, team.slug)
-        .replace(selectedTeam.id, team.id)
-    )
-    router.refresh()
-  }
+  // Stays true until the hard navigation unloads the page; the overlay should
+  // never tear down before then.
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = () => {
-    signOutAction()
+    setIsLoggingOut(true)
+    // Hard navigation (not the Next router) to a plain route handler that
+    // clears the api-key cookie server-side: a soft RSC redirect would
+    // re-render the signed-out dashboard and tear down this overlay before
+    // the browser leaves the page. window.location keeps the overlay up until
+    // unload.
+    window.location.href = SIGN_OUT_URL
   }
 
-  const handleMenuOpenChange = (open: boolean) => {
-    if (open && teams.length > 0) {
-      teams.forEach((team) => {
-        const url = PROTECTED_URLS.SANDBOXES(team.slug || team.id)
-        router.prefetch(url, { kind: PrefetchKind.FULL })
-      })
-    }
+  const brand = (
+    <>
+      <E2BLogo
+        className={cn(
+          'size-8 shrink-0 transition-all duration-100 ease-in-out',
+          'group-data-[collapsible=icon]:size-9'
+        )}
+      />
+      <div className="grid flex-1 text-left leading-tight">
+        <span className="text-fg-tertiary truncate prose-label">E2B</span>
+        <span className="text-fg truncate prose-body-highlight normal-case">
+          Dashboard
+        </span>
+      </div>
+    </>
+  )
+
+  if (!showSignOut) {
+    return (
+      <SidebarMenuItem className="h-14 px-3 pb-2 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pt-2 group-data-[collapsible=icon]:pb-3">
+        <SidebarMenuButton variant="outline" size="switcher" asChild>
+          <div>{brand}</div>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
   }
 
   return (
     <>
-      <SidebarMenuItem>
-        <DropdownMenu onOpenChange={handleMenuOpenChange}>
+      <SidebarMenuItem className="h-14 px-3 pb-2 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pt-2 group-data-[collapsible=icon]:pb-3">
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              variant="outline"
-              size="lg"
-              className={cn(
-                'hover:bg-bg-100 group-data-[collapsible=icon]:pl-0!',
-                className
-              )}
-            >
-              <Avatar
-                className={cn('size-8 shrink-0 transition-all duration-300', {
-                  'border-0 drop-shadow-lg filter':
-                    selectedTeam?.profile_picture_url,
-                })}
-              >
-                <AvatarImage
-                  src={selectedTeam?.profile_picture_url || undefined}
-                />
-                <AvatarFallback className="bg-bg-200 border-0">
-                  {selectedTeam?.name?.charAt(0).toUpperCase() || '?'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="text-fg-500 text-mono truncate text-[0.75rem]">
-                  TEAM
-                </span>
-                {selectedTeam ? (
-                  <span className="text-fg truncate font-sans text-sm normal-case">
-                    {selectedTeam.transformed_default_name || selectedTeam.name}
-                  </span>
-                ) : (
-                  <Skeleton className="h-4 w-full" />
-                )}
-              </div>
-              <ChevronsUpDown className="text-fg-500 ml-auto size-4" />
+            <SidebarMenuButton variant="outline" size="switcher">
+              {brand}
+              <UnpackIcon className="text-fg-tertiary ml-auto size-4!" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             collisionPadding={10}
-            className="w-[280px] px-3"
+            className="w-[280px] p-2"
             align="start"
             sideOffset={4}
           >
-            <DropdownMenuRadioGroup
-              value={selectedTeam?.id}
-              onValueChange={handleTeamChange}
-            >
-              {user?.email && (
-                <DropdownMenuLabel className="mb-2">
-                  {user.email}
-                </DropdownMenuLabel>
-              )}
-              {teams.length > 0 ? (
-                teams.map((team) => (
-                  <DropdownMenuRadioItem key={team.id} value={team.id}>
-                    <Avatar className="size-5 shrink-0 border-none">
-                      <AvatarImage
-                        src={team.profile_picture_url || undefined}
-                      />
-                      <AvatarFallback className="bg-bg-400 group-focus:text-accent text-fg-500 text-xs">
-                        {team.name?.charAt(0).toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="flex-1 truncate font-sans">
-                      {team.transformed_default_name || team.name}
-                    </span>
-                  </DropdownMenuRadioItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>No teams available</DropdownMenuItem>
-              )}
-            </DropdownMenuRadioGroup>
-
-            <DropdownMenuItem
-              className="text-accent mt-1 font-sans"
-              onSelect={() => setCreateTeamOpen(true)}
-            >
-              <Plus className="ml-0.5 size-5" /> Create New Team
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuGroup className="gap-1 pt-0 pb-2">
-              <DropdownMenuItem className="font-sans" asChild>
-                <Link href={PROTECTED_URLS.ACCOUNT_SETTINGS}>
-                  <UserRoundCog className="size-4" /> Account Settings
-                </Link>
-              </DropdownMenuItem>
-
+            <DropdownMenuGroup className="gap-0 pt-0 pb-0">
               <DropdownMenuItem
                 variant="error"
-                className="font-sans"
+                className="h-9 gap-2.5 [&_svg]:size-5 font-sans prose-body-highlight"
+                disabled={isLoggingOut}
                 onSelect={handleLogout}
               >
-                <LogOut className="size-4" /> Log Out
+                <LogOutIcon className="ml-0.5" /> Change API key
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
-      <CreateTeamDialog
-        open={createTeamOpen}
-        onOpenChange={setCreateTeamOpen}
-      />
+      {isLoggingOut && (
+        <Portal className="bg-bg/90 fixed inset-0 z-60 flex items-center justify-center gap-2.5">
+          <Loader variant="slash" size="sm" />
+          <span className="prose-body-highlight">Signing out...</span>
+        </Portal>
+      )}
     </>
   )
 }

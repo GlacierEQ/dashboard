@@ -1,3 +1,7 @@
+'use client'
+
+import { useState } from 'react'
+import ShikiHighlighter from 'react-shiki'
 import { useShikiTheme } from '@/configs/shiki'
 import { cn } from '@/lib/utils'
 import {
@@ -5,18 +9,22 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/ui/primitives/popover'
-import { useState } from 'react'
-import ShikiHighlighter from 'react-shiki'
 import { Button } from './primitives/button'
 import { ScrollArea, ScrollBar } from './primitives/scroll-area'
 
 interface JsonPopoverProps {
   json: unknown
   children: React.ReactNode
+  buttonProps?: React.ComponentPropsWithoutRef<typeof Button>
   className?: string
 }
 
-export function JsonPopover({ json, children, className }: JsonPopoverProps) {
+export function JsonPopover({
+  json,
+  children,
+  buttonProps,
+  className,
+}: JsonPopoverProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const shikiTheme = useShikiTheme()
@@ -25,10 +33,10 @@ export function JsonPopover({ json, children, className }: JsonPopoverProps) {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
-          size="slate"
+          variant="quaternary"
+          size="none"
           className={cn(
-            'h-full w-full cursor-pointer justify-start truncate p-0 font-sans whitespace-nowrap',
+            'cursor-pointer justify-start truncate font-sans whitespace-nowrap',
             className
           )}
           onClick={(e) => {
@@ -41,6 +49,7 @@ export function JsonPopover({ json, children, className }: JsonPopoverProps) {
             e.preventDefault()
             setIsOpen(true)
           }}
+          {...buttonProps}
         >
           {children}
         </Button>

@@ -1,13 +1,13 @@
 'use client'
 
-import * as LabelPrimitive from '@radix-ui/react-label'
+import type * as LabelPrimitive from '@radix-ui/react-label'
 import { Slot } from '@radix-ui/react-slot'
 import * as React from 'react'
 import {
   Controller,
-  ControllerProps,
-  FieldPath,
-  FieldValues,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
   FormProvider,
   useFormContext,
 } from 'react-hook-form'
@@ -100,7 +100,7 @@ const FormLabel = React.forwardRef<
   return (
     <Label
       ref={ref}
-      className={cn(error && 'text-error', className)}
+      className={cn(error && 'text-accent-error-highlight', className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -140,7 +140,7 @@ const FormDescription = React.forwardRef<
     <p
       ref={ref}
       id={formDescriptionId}
-      className={cn('text-fg-500 text-sm', className)}
+      className={cn('text-fg-tertiary ', className)}
       {...props}
     />
   )
@@ -164,7 +164,7 @@ const FormMessage = React.forwardRef<
       id={formMessageId}
       className={cn(
         badgeVariants({ variant: 'error' }),
-        'font-regular w-fit',
+        'prose-label whitespace-break-spaces w-fit h-auto',
         className
       )}
       {...props}

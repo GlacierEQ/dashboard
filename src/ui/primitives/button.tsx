@@ -1,74 +1,83 @@
-import { cn } from '@/lib/utils'
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
-import { Loader } from '../loader'
+import { cn } from '@/lib/utils/ui'
+import { Loader } from './loader'
+
+const linkStyles = [
+  'text-fg-secondary underline underline-offset-2',
+  'hover:opacity-80', // hover
+  'data-[display-state=hover]:opacity-80', // duplicated hover, for display purposes
+  'disabled:opacity-50', // disabled
+]
 
 const buttonVariants = cva(
   [
-    'inline-flex items-center cursor-pointer rounded-sm justify-center whitespace-nowrap',
-    'font-mono uppercase tracking-wider text-sm',
-    'transition-colors duration-150',
-    'focus-visible:outline-none ',
-    'disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex items-center cursor-pointer justify-center whitespace-nowrap',
+    'transition-colors [&_svg]:transition-colors disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0',
+    '[&_svg]:text-icon-tertiary',
   ].join(' '),
   {
     variants: {
       variant: {
-        default: [
-          'bg-fg text-bg',
-          'hover:bg-fg-100 focus:bg-fg-100',
-          'active:translate-y-[1px] active:shadow-none',
+        primary: [
+          'prose-body-highlight',
+          '[&_svg]:text-icon-inverted',
+          'bg-bg-inverted text-fg-inverted',
+          'hover:bg-bg-inverted-hover', // hover
+          'data-[display-state=hover]:bg-bg-inverted-hover', // duplicated hover, for display purposes
+          'disabled:text-fg-tertiary disabled:bg-fill disabled:[&_svg]:text-icon-tertiary', // disabled
+          'data-[state=open]:bg-bg-inverted-hover',
         ].join(' '),
-        accent: [
-          'bg-accent/10 text-accent',
-          'hover:bg-accent/20 focus:bg-accent/20',
-          'active:translate-y-[1px] active:shadow-none',
+        secondary: [
+          'prose-body-highlight',
+          'border',
+          'hover:border-stroke-active', // hover
+          'data-[display-state=hover]:border-stroke-active', // duplicated hover, for display purposes
+          'active:bg-bg-1 active:[&_svg]:text-icon', // active
+          'data-[display-state=active]:bg-bg-1 data-[display-state=active]:[&_svg]:text-icon', // duplicated active, for display purposes
+          'disabled:opacity-65', // disabled
+          'data-[state=open]:bg-bg-1',
         ].join(' '),
-        ghost: [
-          'bg-transparent',
-          'hover:bg-transparent focus:bg-transparent',
-          'active:translate-y-[1px] active:shadow-none',
+        tertiary: [
+          'prose-body-highlight',
+          'text-fg',
+          'hover:text-fg hover:underline', // hover
+          'data-[display-state=hover]:text-fg data-[display-state=hover]:underline', // duplicated hover, for display purposes
+          'active:text-fg active:[&_svg]:text-icon', // active
+          'data-[display-state=active]:text-fg data-[display-state=active]:[&_svg]:text-icon', // duplicated active, for display purposes
+          'disabled:opacity-65 disabled:text-fg-tertiary', // disabled
         ].join(' '),
-        muted: [
-          'border border-border-200 bg-bg-200 text-fg-300 hover:text-fg',
-          'hover:bg-bg-200/90 focus:bg-bg-200/90',
-          'active:translate-y-[1px] active:shadow-none',
+        quaternary: [
+          'prose-body-highlight',
+          'text-fg-tertiary',
+          'hover:text-fg', // hover
+          'data-[display-state=hover]:text-fg', // duplicated hover, for display purposes
+          'active:text-fg active:[&_svg]:text-icon', // active
+          'data-[display-state=active]:text-fg data-[display-state=active]:[&_svg]:text-icon', // duplicated active, for display purposes
+          'disabled:opacity-65', // disabled
         ].join(' '),
         error: [
-          'bg-error/10 text-error',
-          'hover:bg-error/20 focus:bg-error/20',
-          'active:translate-y-[1px] active:shadow-none',
+          'prose-body-highlight',
+          '[&_svg]:text-icon-inverted',
+          'bg-accent-error-highlight text-fg-inverted',
+          'hover:bg-accent-error-highlight/90', // hover
+          'data-[display-state=hover]:bg-accent-error-highlight/90', // duplicated hover, for display purposes
+          'disabled:text-fg-tertiary disabled:bg-fill disabled:[&_svg]:text-icon-tertiary', // disabled
+          'data-[state=open]:bg-accent-error-highlight/90',
         ].join(' '),
-        warning: [
-          'bg-warning/10 text-warning',
-          'hover:bg-warning/20 focus:bg-warning/20',
-          'active:translate-y-[1px] active:shadow-none',
-        ].join(' '),
-        outline: [
-          'border border-border-100 bg-transparent',
-          'hover:bg-bg-300/80 focus:bg-bg-300/80',
-          'active:translate-y-[1px] active:shadow-none',
-        ].join(' '),
-        link: [
-          'text-accent underline-offset-4',
-          'hover:underline hover:bg-transparent',
-          'focus:ring-0 focus:underline focus:bg-transparent',
-          'shadow-none',
-        ].join(' '),
+        link: ['prose-body', ...linkStyles].join(' '),
+        'link-table': ['prose-table', ...linkStyles].join(' '),
       },
       size: {
-        default: 'h-8 px-3 gap-2',
-        sm: 'h-7 px-2 gap-1',
-        lg: 'h-10 px-4 gap-2',
-        icon: 'h-8 w-8 gap-2',
-        iconSm: 'h-7 w-7 gap-1',
-        iconLg: 'h-10 w-10 text-xl gap-2',
-        slate: 'h-auto px-0 py-0 gap-1',
+        default:
+          '[&_svg]:size-4 h-9 py-1.5 gap-1 [&:has(svg)]:pr-3 [&:has(svg)]:pl-2.5 px-4',
+        small: 'h-7 py-1.5 gap-1 [&_svg]:size-4 px-2.5',
+        none: 'gap-1 [&_svg]:size-4',
       },
     },
     defaultVariants: {
-      variant: 'default',
+      variant: 'primary',
       size: 'default',
     },
   }
@@ -78,31 +87,31 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
-  loading?: boolean
+  loading?: string
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    { className, variant, size, asChild = false, loading = false, ...props },
-    ref
-  ) => {
+  ({ className, variant, size, asChild = false, loading, ...props }, ref) => {
+    if (loading) {
+      return (
+        <button
+          {...props}
+          className={cn(buttonVariants({ variant, size, className }))}
+          disabled
+          ref={ref}
+        >
+          <Loader variant="slash" className="min-w-2" /> {loading}
+        </button>
+      )
+    }
+
     const Comp = asChild ? Slot : 'button'
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        disabled={loading || props.disabled}
         {...props}
-      >
-        {loading ? (
-          <div className="flex items-center gap-2">
-            {props.children}
-            <Loader />
-          </div>
-        ) : (
-          props.children
-        )}
-      </Comp>
+      />
     )
   }
 )

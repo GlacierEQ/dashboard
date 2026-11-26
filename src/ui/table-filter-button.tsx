@@ -1,7 +1,6 @@
-import { X } from 'lucide-react'
 import React from 'react'
 import { Button } from './primitives/button'
-import { Separator } from './primitives/separator'
+import { CloseIcon } from './primitives/icons'
 
 interface TableFilterButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -16,20 +15,19 @@ export const TableFilterButton = React.forwardRef<
   return (
     <Button
       ref={ref}
-      variant="outline"
-      size="sm"
-      className="max-w-56 text-xs"
+      variant="secondary"
+      className="max-w-56"
       suppressHydrationWarning
       {...props}
     >
-      <X className={'size-3.5'} />
-      {label}
+      <span className="text-fg-tertiary">{label}</span>
       {value && (
         <>
-          <Separator orientation="vertical" className="h-4" />
-          <span className="truncate text-contrast-1">{value}</span>
+          <span className="text-fg-tertiary">·</span>
+          <span className="truncate text-fg">{value}</span>
         </>
       )}
+      <CloseIcon />
     </Button>
   )
 })

@@ -1,29 +1,29 @@
 'use client'
 
-import {
-  DashboardNavLink,
-  MAIN_DASHBOARD_LINKS,
-} from '@/configs/dashboard-navs'
-import { useSelectedTeam } from '@/lib/hooks/use-teams'
-import { cn } from '@/lib/utils'
-import Link from 'next/link'
+import micromatch from 'micromatch'
+import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
+import { SIDEBAR_MAIN_LINKS, type SidebarNavItem } from '@/configs/sidebar'
 
+import { useIsMobile } from '@/lib/hooks/use-mobile'
+import { cn } from '@/lib/utils'
+import { HoverPrefetchLink } from '@/ui/hover-prefetch-link'
 import {
+  SIDEBAR_TRANSITION_CLASSNAMES,
   SidebarContent,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/ui/primitives/sidebar'
-import { usePathname } from 'next/navigation'
 
 type GroupedLinks = {
-  [key: string]: DashboardNavLink[]
+  [key: string]: SidebarNavItem[]
 }
 
-const createGroupedLinks = (links: DashboardNavLink[]): GroupedLinks => {
+const createGroupedLinks = (links: SidebarNavItem[]): GroupedLinks => {
   return links.reduce((acc, link) => {
     const group = link.group || 'ungrouped'
     if (!acc[group]) {
@@ -35,64 +35,59 @@ const createGroupedLinks = (links: DashboardNavLink[]): GroupedLinks => {
 }
 
 export default function DashboardSidebarContent() {
-  const selectedTeam = useSelectedTeam()
-  const selectedTeamIdentifier = selectedTeam?.slug ?? selectedTeam?.id
   const pathname = usePathname()
+  const isMobile = useIsMobile()
+  const { setOpenMobile } = useSidebar()
+  const visibleLinks = SIDEBAR_MAIN_LINKS
 
   const groupedNavLinks = useMemo(
-    () => createGroupedLinks(MAIN_DASHBOARD_LINKS),
-    []
+    () => createGroupedLinks(visibleLinks),
+    [visibleLinks]
   )
 
-  const isActive = (href: string) => {
-    if (!pathname) return false
+  const isActive = (link: SidebarNavItem) => {
+    if (!pathname || !link.activeMatch) return false
 
-    if (pathname === href) return true
-
-    // split into segments for prefix comparison
-    const hrefSegments = href.split('/').filter(Boolean)
-    const pathSegments = pathname.split('/').filter(Boolean)
-
-    if (pathSegments.length < hrefSegments.length) return false
-
-    for (let i = 0; i < hrefSegments.length; i++) {
-      if (hrefSegments[i] !== pathSegments[i]) {
-        return false
-      }
-    }
-
-    return true
+    return micromatch.isMatch(pathname, link.activeMatch)
   }
 
   return (
-    <SidebarContent className="overflow-x-hidden">
-      {Object.entries(groupedNavLinks).map(([group, links], ix) => (
+    <SidebarContent className="overflow-x-hidden gap-0">
+      {Object.entries(groupedNavLinks).map(([group, links]) => (
         <SidebarGroup key={group}>
           {group !== 'ungrouped' && (
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
           )}
           <SidebarMenu>
             {links.map((item) => {
-              const href = item.href({
-                teamIdOrSlug: selectedTeamIdentifier ?? undefined,
-              })
+              const href = item.href
 
               return (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
-                    variant={isActive(href) ? 'active' : 'default'}
+                    isActive={isActive(item)}
                     asChild
                     tooltip={item.label}
                   >
-                    <Link suppressHydrationWarning href={href} prefetch>
+                    <HoverPrefetchLink
+                      href={href}
+                      onClick={
+                        isMobile
+                          ? () => {
+                              setOpenMobile(false)
+                            }
+                          : undefined
+                      }
+                    >
                       <item.icon
                         className={cn(
-                          'text-fg-500 w-4',
-                          isActive(href) && 'text-accent/80'
+                          'transition-[size]',
+                          SIDEBAR_TRANSITION_CLASSNAMES,
+                          isActive(item) && 'text-accent-main-highlight'
                         )}
                       />
                       <span>{item.label}</span>
-                    </Link>
+                    </HoverPrefetchLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )

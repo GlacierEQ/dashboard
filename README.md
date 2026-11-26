@@ -1,8 +1,4 @@
-<!-- <p align="center">
-  <img width="100" src="/readme-assets/logo-circle.png" alt="e2b logo">
-</p> -->
-![Dashboard Preview Dark](/readme-assets/dashboard-preview-dark.png#gh-dark-mode-only)
-![Dashboard Preview Light](/readme-assets/dashboard-preview-light.png#gh-light-mode-only)
+![Dashboard Preview](/readme-assets/dashboard-preview.png)
 
 # E2B Dashboard
 
@@ -10,32 +6,90 @@
 [![Discord](https://img.shields.io/discord/1092455714431180995?color=7289DA&label=Discord&logo=discord&logoColor=white)](https://discord.com/channels/1092455714431180995)
 [![GitHub Stars](https://img.shields.io/github/stars/e2b-dev/dashboard?style=social)](https://github.com/e2b-dev/dashboard)
 
+Open-source dashboard for self-hosted [E2B infrastructure](https://github.com/e2b-dev/infra). Manage and monitor sandboxes and templates with a team API key — no user accounts, no external auth provider.
+
 ## Quick Links
-- 📚 [Documentation](https://e2b.dev/docs)
+- 📚 [Documentation](https://docs.e2b.dev/?utm_source=github&utm_medium=referral&utm_campaign=readme&utm_content=dashboard)
 - 💬 [Discord Community](https://discord.gg/e2b)
 - 🐛 [Issue Tracker](https://github.com/e2b-dev/dashboard/issues)
 - 🤝 [Contributing Guide](CONTRIBUTING.md)
 
 ## Overview
-Our Dashboard is a modern, feature-rich web application built to manage and monitor E2B services. Built with Next.js 15 and React 19, it provides a seamless user experience for managing sandboxes, API keys, and usage analytics.
+
+Built with Next.js 16, React 19, and TypeScript. The dashboard talks to a single API from your [E2B infrastructure deployment](https://github.com/e2b-dev/infra):
+
+- **infra-api** (`https://api.<your-domain>`) — sandboxes, templates, builds
+
+### Authentication
+
+Authentication is a single **team API key**:
+
+- Visiting `/` shows a form to enter the key. It is validated against infra-api and stored in an httpOnly `e2b_api_key` cookie. All upstream calls happen server-side with the `X-API-Key` header — the key never reaches client JavaScript.
+- Alternatively, set the `E2B_API_KEY` environment variable to pre-authenticate the whole deployment (single-user mode; the key form and sign-out are hidden).
+
+### Configuration
+
+| Variable | Read | Purpose |
+|---|---|---|
+| `PUBLIC_E2B_DOMAIN` | runtime | Required E2B cluster domain; used by the SDK and to derive `https://api.<domain>` |
+| `PUBLIC_SANDBOX_URL` | per request | Optional sandbox traffic base URL, reachable from both the browser and server |
+| `E2B_INFRA_API_URL` | server start | Optional server-side API URL; overrides the domain-derived URL |
+| `DASHBOARD_COOKIE_SECURE` | server start | `false` only for a plain-http install; the API key cookie then travels unencrypted. Defaults to secure in production builds |
+
+Set `PUBLIC_E2B_DOMAIN` when starting the container. Next does not give
+`PUBLIC_` any special behavior: the server explicitly reads these values at
+runtime. Restart the container and reload open pages after changing its
+configuration. Missing or blank domains stop startup.
+
+Legacy variables no longer act as fallbacks. Rename them before upgrading;
+validation reports the replacement for each deprecated variable that is still
+set, even if the new name is also present.
+
+| Deprecated variable | Replacement |
+|---|---|
+| `NEXT_PUBLIC_E2B_DOMAIN` | `PUBLIC_E2B_DOMAIN` |
+| `NEXT_PUBLIC_INFRA_API_URL` | `E2B_INFRA_API_URL` |
+| `NEXT_PUBLIC_E2B_SANDBOX_URL` / `E2B_SANDBOX_URL` | `PUBLIC_SANDBOX_URL` |
+
+The API URL override remains optional; without it the domain determines the
+API URL. An absent or blank `PUBLIC_SANDBOX_URL` lets the SDK use domain
+routing.
+
+Every API or sandbox URL must include `http://` or `https://`. The schema in
+`src/lib/env.ts` validates configuration for development, builds, and
+server startup, even when telemetry is disabled. Invalid values stop startup
+and name the variable. The cookie flag accepts `true` or `false` (case-insensitive, with
+surrounding whitespace ignored); an empty value keeps the default.
+
+The dashboard's Server Component layout resolves **only the domain and
+sandbox URL** and passes them as props to a client `ClientConfigProvider`.
+The terminal and filesystem inspector read this provider on their first
+render, without a separate config request. API endpoints and team credentials
+stay on the server. Both public settings are visible to browser users and
+must contain no secrets.
+
+For a local sandbox proxy, explicitly set `PUBLIC_SANDBOX_URL`, for example
+`http://127.0.0.1:3002` when the browser and server run on the same machine.
+Use an address reachable from both the browser and server. When a sandbox
+URL is unset, the SDK uses domain-based routing, including when
+`E2B_INFRA_API_URL` is set.
+
+Server-side sandbox calls, such as terminal PTY cleanup, use the same domain
+and sandbox URL resolution. `Host`, `X-Forwarded-Host`, and
+`X-Forwarded-Proto` never determine sandbox destinations.
 
 ## Features
-- **Modern Stack**: Built with Next.js 15, React 19, and TypeScript
-- **Real-time Analytics**: Monitor your sandbox usage and performance
-- **Authentication**: Secure authentication powered by Supabase
-- **Documentation**: Integrated MDX documentation support
-- **Type Safety**: Full TypeScript support throughout the codebase
+
+- **Sandboxes**: paginated live list, per-sandbox monitoring (CPU/memory/disk), logs, filesystem inspector, and an in-browser terminal
+- **Templates**: list, visibility management, tags, build history with streaming build logs
 
 ## Getting Started
 
-> **Self-hosting Note**: If you're planning to self-host this dashboard, you'll likely want to self-host our infrastructure first. Please refer to our [infrastructure repository](https://github.com/e2b-dev/infra) for guidance on setting up the E2B platform on your own infrastructure.
+> You need a running [E2B infrastructure](https://github.com/e2b-dev/infra) deployment first.
 
 ### Prerequisites
-- Node.js 18+
-- Git
-- Vercel account
-- Supabase account
-- PostHog account (optional for analytics)
+- [Bun](https://bun.sh) 1.2+
+- A team API key from your E2B deployment (`e2b_...`)
 
 ### Local Development Setup
 
@@ -47,142 +101,90 @@ cd dashboard
 
 2. Install dependencies
 ```bash
-# Using Bun (recommended)
 bun install
-
-# Using npm
-npm install --legacy-peer-deps
 ```
 
-3. Environment Variables
+3. Set up environment variables
 ```bash
-# Copy the example env file
-cp .env.example .env.local
+cp .env.example .env
+# set PUBLIC_E2B_DOMAIN (and optionally E2B_INFRA_API_URL) to point at
+# your infrastructure
 ```
 
-4. Set up required services:
-
-#### a. Key-Value Store Setup
-This project requires a Redis-compatible key-value store. You'll need to:
-
-1. Set up a Redis instance (self-hosted or using a cloud provider)
-2. Configure the following environment variables in your `.env.local` file:
-   ```
-   KV_URL=your_redis_connection_string
-   KV_REST_API_URL=your_redis_rest_api_url
-   KV_REST_API_TOKEN=your_redis_api_write_token
-   KV_REST_API_READ_ONLY_TOKEN=your_redis_api_read_token
-   ```
-
-> **Note**: For production deployments, we use Vercel KV Storage integration, which provides a managed Redis-compatible store and automatically configures these environment variables. You can add this integration through the Vercel dashboard when deploying your project.
-
-#### b. Supabase Setup
-1. Create a new Supabase project
-2. Go to Project Settings > API
-3. Copy the `anon key` & `service_role key` to populate `.env.local`
-4. Configure authentication:
-   - Go to Authentication > URL Configuration
-   - Set Site URL to the hosting domain 
-   - Add `http://localhost:3000/**` to Redirect URLs (for development)
-5. Enable auth providers:
-   - Go to Authentication > Providers
-   - Enable the providers you want to use (GitHub, Google, E-Mail)
-   - Configure each provider with the appropriate credentials
-6. Configure e-mail templates:
-   - Navigate to **Authentication → Templates** in the Supabase dashboard
-   - Update the URLs in the **Reset Password** and **Confirm Sign-Up** templates so that the CTA links point back to the dashboard's confirmation endpoint:
-
-   **Reset Password**
-   ```
-   {{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next={{ .RedirectTo }}&confirmation_url={{ .ConfirmationURL }}
-   ```
-
-   **Confirm Sign-Up**
-   ```
-   {{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo }}&confirmation_url={{ .ConfirmationURL }}
-   ```
-
-#### c. Database Setup
-1. Apply the database migrations manually:
-   - Navigate to the `/migrations` folder in the project
-   - Execute each SQL migration file in sequential order against your Supabase database
-   - You can run these migrations using the Supabase SQL Editor or a PostgreSQL client
-   - Make sure to apply migrations in the correct order based on their timestamp prefixes
-
-#### d. Supabase Storage Setup
-1. Go to Storage > Buckets
-2. Create a new **public** bucket named `profile-pictures`
-
-#### e. Start the development server
+4. Start the development server
 ```bash
-# Using Bun (recommended)
 bun run dev
-
-# Using npm
-npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+5. Open [http://localhost:3000](http://localhost:3000) and enter your team API key.
 
-## Development
+### Production
 
-### Available Scripts
 ```bash
-# Using Bun (recommended)
-bun run dev         # Start development server
-bun run build      # Create production build
-bun run start      # Start production server
-bun run preview    # Build and preview production
-bun run lint       # Run ESLint
-bun run lint:fix   # Auto-fix ESLint issues
-SUPABASE_PROJECT_ID=your-project-id bun run db:types   # Generate DB types
-bun run db:migration # Create migration
-
-# All commands work with npm as well:
-npm run dev
-# etc...
+bun run build
+bun run start
 ```
 
-### Project Structure
+### Run it in a container
+
+The repository builds a self-contained image: Bun resolves the dependencies,
+Node runs the Next build, and Node serves the standalone output; the runtime
+stage carries no dev dependencies.
+
+```bash
+docker build -t e2b-dashboard .
+docker run --rm -p 3001:3001 \
+  -e PUBLIC_E2B_DOMAIN=your-domain.com \
+  e2b-dashboard
 ```
-src/
-├── app/          # Next.js app router pages
-├── features/     # Feature-specific components
-├── ui/           # Reusable UI components
-├── lib/          # Utility functions and shared logic
-├── styles/       # Global styles and Tailwind config
-└── types/        # TypeScript type definitions
-└── server/       # Server only logic & actions
-└── __test__/     # Test files and utilities
+
+- `PORT` (default `3001`) and `HOSTNAME` (default `0.0.0.0`) are read by the
+  server at start. The default keeps the dashboard clear of port 3000, which
+  an E2B API already uses when both share a host network.
+- `PUBLIC_E2B_DOMAIN` configures the cluster at container start, so the same
+  image can serve different installations. Use `PUBLIC_SANDBOX_URL` when the
+  default SDK routing does not fit your deployment.
+- The image builds without installation settings. Its temporary build domain
+  is not carried into the runtime image, so a container started without
+  `PUBLIC_E2B_DOMAIN` fails validation.
+- The build needs outbound HTTPS for the three Google Fonts families in
+  `src/app/fonts.ts`; an air-gapped build fails there.
+- `GET /api/health` reports infra-api's health and answers 503 while
+  infra-api is unreachable, so use `GET /` as the container liveness check.
+- `scripts/container-smoke.sh` builds the image and asserts those responses.
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `bun run dev` | Start the development server |
+| `bun run build` | Production build |
+| `bun run test:unit` | Unit tests |
+| `bun run test:integration` | Integration tests |
+| `bun run lint` / `bun run format` | Biome lint / format |
+| `bun run generate:infra` | Regenerate infra-api contract types from `spec/` |
+
+## Releases
+
+Versions are managed by [release-please](https://github.com/googleapis/release-please):
+merging the open release PR updates `CHANGELOG.md` and `package.json` and tags
+the release as `vX.Y.Z`.
+
+That tag publishes a container image to
+`us-docker.pkg.dev/e2b-artifacts/dashboard/dashboard:vX.Y.Z` (`linux/amd64` and
+`linux/arm64`, anonymous pulls):
+
+```bash
+docker run --rm -p 3001:3001 us-docker.pkg.dev/e2b-artifacts/dashboard/dashboard:vX.Y.Z
 ```
 
-### Testing
-We use a comprehensive testing strategy with integration tests and plans for E2E tests. For detailed information about our testing approach, environment setup, and best practices, see the [Testing README](src/__test__/README.md).
+A published image has no deployment baked in; it reaches an E2B deployment only
+once you give it the runtime URL variables.
 
-### Environment Variables
-See [`src/lib/env.ts`](./src/lib/env.ts) for all required environment variables and their validation schemas.
-
-## Production Deployment
-
-This application is optimized for deployment on Vercel:
-
-1. Push your changes to GitHub
-2. Import your repository in Vercel
-3. Deploy!
-
-> **Note**: The application uses Partial Prerendering (PPR) which is currently only supported on Vercel's infrastructure. This can be turned off inside [`next.config.mjs`](./next.config.mjs).
-
-## Contributing
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## Support
-If you need help or have questions:
-
-1. Check our [Documentation](https://e2b.dev/docs)
-2. Join our [Discord Community](https://discord.gg/e2b)
-3. Open an [Issue](https://github.com/e2b-dev/dashboard/issues)
+Image tags are immutable — a publish never moves an existing tag. The Publish
+workflow can also be run by hand (`ref`, `tag`, and a `dry_run` that builds
+without pushing).
 
 ## License
-This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details.
 
-Copyright 2025 FoundryLabs, Inc.
+Apache 2.0 — see [LICENSE](LICENSE).
